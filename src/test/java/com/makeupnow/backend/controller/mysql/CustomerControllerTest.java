@@ -46,6 +46,7 @@ class CustomerControllerTest {
     }
 
     @Test
+    //peut etre test ac des roles differents
     @WithMockUser
     
     void testGetAllCustomers() throws Exception {
