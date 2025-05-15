@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.util.List;
 
+import com.makeupnow.backend.model.mysql.enums.CertificationStatus;
+
 @Entity
 @Getter
 @Setter

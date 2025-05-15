@@ -1,5 +1,8 @@
 package com.makeupnow.backend.model.mysql;
 
+import com.makeupnow.backend.model.mysql.Category; 
+
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,4 +25,9 @@ public class Service {
     @ManyToOne
     @JoinColumn(name = "provider_id")
     private Provider provider;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
 }

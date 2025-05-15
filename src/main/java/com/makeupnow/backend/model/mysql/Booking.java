@@ -2,6 +2,8 @@ package com.makeupnow.backend.model.mysql;
 
 import java.time.LocalDateTime;
 
+import com.makeupnow.backend.model.mysql.enums.BookingStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +36,8 @@ public class Booking {
     @JoinColumn(name = "service_id")
     private Service service;
 
-    @ManyToOne
+    @OneToOne(optional = false)
     @JoinColumn(name = "schedule_id")
     private Schedule schedule;
+    
 }

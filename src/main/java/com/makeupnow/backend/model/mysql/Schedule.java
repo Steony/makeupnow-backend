@@ -16,12 +16,15 @@ public class Schedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String day; // ex: "LUNDI", "MARDI"
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-
+    private LocalDateTime startTime; // ex : 2025-03-23T09:00
+    private LocalDateTime endTime;   // ex : 2025-03-23T12:00
+    
 
     @ManyToOne
     @JoinColumn(name = "provider_id")
     private Provider provider;
+
+    @OneToOne(mappedBy = "schedule")
+    private Booking booking;
+
 }

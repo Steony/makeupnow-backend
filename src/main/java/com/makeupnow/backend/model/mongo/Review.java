@@ -23,4 +23,7 @@ public class Review {
     private String comment;
 
     private LocalDateTime dateComment;
+
+    private String bookingId; // lien avec la réservation concernée 
+
 }

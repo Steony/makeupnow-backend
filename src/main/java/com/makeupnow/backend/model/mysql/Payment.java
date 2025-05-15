@@ -16,9 +16,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String method; // Ex: "CB", "Espèces", "PayPal"
+    private String method; // "CB", "Espèces", "PayPal"
     private double amount;
-    private String status; // Ex: "PENDING", "PAID", "REFUNDED"
+    private String status; // "PENDING", "PAID", "REFUNDED"
 
     private LocalDateTime paymentDate;
 
@@ -27,6 +27,6 @@ public class Payment {
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name = "provider_id")
+    @JoinColumn(name = "provider_id", nullable = true)
     private Provider provider;
 }
