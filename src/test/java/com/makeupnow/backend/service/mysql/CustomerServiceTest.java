@@ -4,7 +4,6 @@ import com.makeupnow.backend.model.mysql.Customer;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mysql.CustomerRepository;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,8 +38,8 @@ class CustomerServiceTest {
 
         // Then
         assertThat(customers).hasSize(2);
-        assertThat(customers.get(0).getFirstname()).isEqualTo("John");
-        assertThat(customers.get(1).getFirstname()).isEqualTo("Jane");
+        assertThat(customers.get(0).getFirstName()).isEqualTo("John");
+        assertThat(customers.get(1).getFirstName()).isEqualTo("Jane");
     }
 
     // ✅ Test 2 : Récupérer un client par ID
@@ -55,8 +54,8 @@ class CustomerServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getFirstname()).isEqualTo("John");
-        assertThat(result.getLastname()).isEqualTo("Doe");
+        assertThat(result.getFirstName()).isEqualTo("John");
+        assertThat(result.getLastName()).isEqualTo("Doe");
     }
 
     // ✅ Test 3 : Enregistrer un nouveau client (save)
@@ -71,7 +70,7 @@ class CustomerServiceTest {
 
         // Then
         assertThat(savedCustomer).isNotNull();
-        assertThat(savedCustomer.getFirstname()).isEqualTo("Alice");
+        assertThat(savedCustomer.getFirstName()).isEqualTo("Alice");
     }
 
    // ✅ Test 4 : Mettre à jour un client existant (save)

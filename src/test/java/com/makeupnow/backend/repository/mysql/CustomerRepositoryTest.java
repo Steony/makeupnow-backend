@@ -30,8 +30,8 @@ class CustomerRepositoryTest {
     
     void testSaveCustomer() {
         Customer customer = new Customer();
-        customer.setFirstname("John");
-        customer.setLastname("Doe");
+        customer.setFirstName("John");
+        customer.setLastName("Doe");
         customer.setEmail("john.doe@example.com");
 
         Customer savedCustomer = customerRepository.save(customer);
@@ -43,8 +43,8 @@ class CustomerRepositoryTest {
     
     void testFindCustomerById() {
         Customer customer = new Customer();
-        customer.setFirstname("Jane");
-        customer.setLastname("Smith");
+        customer.setFirstName("Jane");
+        customer.setLastName("Smith");
         customer.setEmail("jane.smith@example.com");
 
         Customer savedCustomer = customerRepository.save(customer);
@@ -58,13 +58,13 @@ class CustomerRepositoryTest {
     
     void testFindAllCustomers() {
         Customer customer1 = new Customer();
-        customer1.setFirstname("Alice");
-        customer1.setLastname("Wonderland");
+        customer1.setFirstName("Alice");
+        customer1.setLastName("Wonderland");
         customer1.setEmail("alice@example.com");
 
         Customer customer2 = new Customer();
-        customer2.setFirstname("Bob");
-        customer2.setLastname("Builder");
+        customer2.setFirstName("Bob");
+        customer2.setLastName("Builder");
         customer2.setEmail("bob@example.com");
 
         customerRepository.save(customer1);
@@ -78,8 +78,8 @@ class CustomerRepositoryTest {
    
     void testDeleteCustomer() {
         Customer customer = new Customer();
-        customer.setFirstname("Charlie");
-        customer.setLastname("Brown");
+        customer.setFirstName("Charlie");
+        customer.setLastName("Brown");
         customer.setEmail("charlie.brown@example.com");
 
         Customer savedCustomer = customerRepository.save(customer);

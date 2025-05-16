@@ -62,7 +62,7 @@ class CustomerControllerTest {
     void testGetCustomerById() throws Exception {
         Customer customer = new Customer();
         customer.setId(1L);
-        customer.setFirstname("John");
+        customer.setFirstName("John");
 
         when(customerService.getCustomerById(1L)).thenReturn(customer);
 
@@ -76,7 +76,7 @@ class CustomerControllerTest {
     
     void testCreateCustomer() throws Exception {
         Customer customer = new Customer();
-        customer.setFirstname("John");
+        customer.setFirstName("John");
 
         when(customerService.saveCustomer(any(Customer.class))).thenReturn(customer);
 
@@ -92,7 +92,7 @@ class CustomerControllerTest {
     
     void testUpdateCustomer() throws Exception {
         Customer updatedCustomer = new Customer();
-        updatedCustomer.setFirstname("UpdatedName");
+        updatedCustomer.setFirstName("UpdatedName");
 
         when(customerService.updateCustomer(anyLong(), any(Customer.class)))
                 .thenReturn(updatedCustomer);

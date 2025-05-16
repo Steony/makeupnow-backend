@@ -12,8 +12,8 @@ public class CustomerTest {
     public void testCustomerGettersAndSetters() {
         // ✅ Création d'un Customer avec le constructeur par défaut
         Customer customer = new Customer();
-        customer.setFirstname("Jane");
-        customer.setLastname("Smith");
+        customer.setFirstName("Jane");
+        customer.setLastName("Smith");
         customer.setEmail("jane.smith@example.com");
         customer.setPassword("password123");
         customer.setPhoneNumber("0987654321");
@@ -21,8 +21,8 @@ public class CustomerTest {
         customer.setRole(Role.CLIENT); // ✅ Test du rôle
 
         // ✅ Vérification des valeurs définies
-        assertThat(customer.getFirstname()).isEqualTo("Jane");
-        assertThat(customer.getLastname()).isEqualTo("Smith");
+        assertThat(customer.getFirstName()).isEqualTo("Jane");
+        assertThat(customer.getLastName()).isEqualTo("Smith");
         assertThat(customer.getEmail()).isEqualTo("jane.smith@example.com");
         assertThat(customer.getPassword()).isEqualTo("password123");
         assertThat(customer.getPhoneNumber()).isEqualTo("0987654321");
@@ -48,8 +48,8 @@ public class CustomerTest {
 
         // ✅ Vérification des valeurs définies
         assertThat(customer.getId()).isEqualTo(1L);
-        assertThat(customer.getFirstname()).isEqualTo("Jane");
-        assertThat(customer.getLastname()).isEqualTo("Smith");
+        assertThat(customer.getFirstName()).isEqualTo("Jane");
+        assertThat(customer.getLastName()).isEqualTo("Smith");
         assertThat(customer.getEmail()).isEqualTo("jane.smith@example.com");
         assertThat(customer.getPassword()).isEqualTo("password123");
         assertThat(customer.getAddress()).isEqualTo("123 Main St");

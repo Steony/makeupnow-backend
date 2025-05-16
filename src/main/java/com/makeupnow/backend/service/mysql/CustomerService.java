@@ -34,8 +34,8 @@ public class CustomerService {
     Customer existingCustomer = customerRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Customer not found"));
     
-    existingCustomer.setFirstname(updatedCustomer.getFirstname());
-    existingCustomer.setLastname(updatedCustomer.getLastname());
+    existingCustomer.setFirstName(updatedCustomer.getFirstName());
+    existingCustomer.setLastName(updatedCustomer.getLastName());
     existingCustomer.setEmail(updatedCustomer.getEmail());
     existingCustomer.setPassword(updatedCustomer.getPassword());
     existingCustomer.setAddress(updatedCustomer.getAddress());
