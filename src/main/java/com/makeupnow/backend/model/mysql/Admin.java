@@ -2,17 +2,22 @@ package com.makeupnow.backend.model.mysql;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.List;
+import lombok.experimental.SuperBuilder;
+import com.makeupnow.backend.model.mysql.enums.Role;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor  // Ajouté pour JPA
+@SuperBuilder
+@Table(name = "admin")
+@DiscriminatorValue("ADMIN")
 public class Admin extends User {
 
-    // Relation avec les logs d'actions utilisateurs
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserActionLog> userActionLogs;
-
+    // Constructeur complet avec tous les attributs hérités
+    public Admin(Long id, String firstname, String lastname, String email, 
+                 String password, String address, String phoneNumber, 
+                 Role role, boolean isActive) {
+        super(id, firstname, lastname, email, password, address, phoneNumber, role, isActive);
+    }
 }

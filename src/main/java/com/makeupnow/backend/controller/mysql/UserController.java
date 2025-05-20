@@ -1,58 +1,48 @@
 package com.makeupnow.backend.controller.mysql;
 
+import com.makeupnow.backend.exception.InvalidRequestException;
+import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mysql.User;
 import com.makeupnow.backend.service.mysql.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
-
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
-
     @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
+    private UserService userService;
+
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@RequestBody User user) {
+        if (userService.existsByEmail(user.getEmail())) {
+            throw new InvalidRequestException("Un utilisateur avec cet email existe déjà.");
+        }
+        boolean created = userService.registerUser(
+            user.getRole(),
+            user.getFirstname(),
+            user.getLastname(),
+            user.getEmail(),
+            user.getPassword(),
+            user.getAddress(),
+            user.getPhoneNumber()
+        );
+        if (created) {
+            return ResponseEntity.ok("Utilisateur créé avec succès.");
+        } else {
+            throw new ResourceNotFoundException("Erreur lors de la création de l'utilisateur.");
+        }
     }
 
-    // ✅ Endpoint pour créer un utilisateur
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.saveUser(user);
-        return ResponseEntity.ok(createdUser);
-    }
-
-    // ✅ Endpoint pour récupérer un utilisateur par ID
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        Optional<User> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // ✅ Endpoint pour récupérer tous les utilisateurs
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
-    }
-
-    // ✅ Endpoint pour supprimer un utilisateur par ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUserById(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ✅ Endpoint pour désactiver un utilisateur
-    @PutMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
-        userService.deactivateUser(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/login")
+    public ResponseEntity<String> loginUser(@RequestBody User user) {
+        boolean success = userService.loginUser(user.getEmail(), user.getPassword());
+        if (success) {
+            return ResponseEntity.ok("Connexion réussie.");
+        } else {
+            throw new InvalidRequestException("Email ou mot de passe incorrect.");
+        }
     }
 }
- 
