@@ -1,12 +1,12 @@
 package com.makeupnow.backend.model.mysql;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
@@ -18,6 +18,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @SuperBuilder
 @Table(name = "app_user")
 @DynamicUpdate
+@JsonIgnoreType // ✅ Correction : ignore complètement cette classe pour la sérialisation
 public abstract class User {
 
     @Id

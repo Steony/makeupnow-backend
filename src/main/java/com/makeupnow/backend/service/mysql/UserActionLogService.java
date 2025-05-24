@@ -6,6 +6,7 @@ import com.makeupnow.backend.repository.mysql.UserActionLogRepository;
 import com.makeupnow.backend.repository.mysql.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class UserActionLogService {
     private UserRepository userRepository;
 
     // Création d’un log d’action
+    @PreAuthorize("hasRole('ADMIN')")
     public void logActionByUserId(Long userId, String action, String description) {
         User user = userRepository.findById(userId).orElse(null);
 
@@ -36,6 +38,7 @@ public class UserActionLogService {
     }
 
     // Anonymiser les logs d’un utilisateur
+    @PreAuthorize("hasRole('ADMIN')")
     public void anonymizeUserLogs(Long userId) {
         List<UserActionLog> logs = userActionLogRepository.findByUserId(userId);
         for (UserActionLog log : logs) {
@@ -46,16 +49,19 @@ public class UserActionLogService {
     }
 
     // Méthode pour récupérer les logs d'un utilisateur
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getUserActionLogsByUserId(Long userId) {
         return userActionLogRepository.findByUserId(userId);
     }
 
     // Méthode pour récupérer les logs anonymisés
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getAnonymizedUserActionLogs() {
         return userActionLogRepository.findByAnonymizedTrue();
     }
 
     // Méthode pour récupérer les logs anonymisés d'un utilisateur donné
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getUserAnonymizedLogsByUserId(Long userId) {
         return userActionLogRepository.findByUserIdAndAnonymizedTrue(userId);
     }

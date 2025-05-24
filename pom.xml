@@ -1,12 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>3.1.5</version> <!-- ✅ version compatible springdoc -->
         <relativePath/>
     </parent>
+
     <groupId>com.makeupnow</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -15,22 +18,19 @@
 
     <properties>
         <java.version>17</java.version>
-        <maven.surefire.plugin.version>3.5.2</maven.surefire.plugin.version>
-        <maven.surefire.report.plugin.version>3.5.2</maven.surefire.report.plugin.version>
-        <junit.jupiter.version>5.8.2</junit.jupiter.version>
+        <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
     </properties>
 
-<repositories>
-    <repository>
-        <id>springdoc-openapi</id>
-        <url>https://repo.spring.io/release</url>
-    </repository>
-</repositories>
-
-
-
     <dependencies>
-        <!-- ✅ Spring Boot Dependencies -->
+        <!-- ✅ Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -39,51 +39,43 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        
-        <!-- ✅ Database Dependencies -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
+
+        <!-- ✅ Base de données -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
-        <!-- ✅ Development Tools -->
         <dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <version>1.18.28</version> <!-- Assure-toi d'avoir la dernière version -->
-    <scope>provided</scope>
-</dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
 
+        <!-- ✅ OpenAPI / Swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.2.0</version>
+        </dependency>
 
-       <dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.2.0</version>
-</dependency>
+        <!-- ✅ Utilitaires -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.28</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
 
-<dependency>
-    <groupId>org.hibernate.validator</groupId>
-    <artifactId>hibernate-validator</artifactId>
-    <version>8.0.1.Final</version>
-</dependency>
-
-
-        
-        <!-- ✅ Testing Dependencies (JUnit 5) -->
+        <!-- ✅ Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -109,7 +101,7 @@
 
     <build>
         <plugins>
-            <!-- ✅ Plugin Maven Compiler -->
+            <!-- ✅ Compilation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -119,13 +111,13 @@
                 </configuration>
             </plugin>
 
-            <!-- ✅ Plugin Spring Boot Maven -->
+            <!-- ✅ Spring Boot plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- ✅ Plugin Surefire pour les tests avec JUnit 5 (JUnit Jupiter) -->
+            <!-- ✅ Tests avec Surefire -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -134,31 +126,7 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <systemPropertyVariables>
-                        <spring.profiles.active>test</spring.profiles.active>
-                    </systemPropertyVariables>
                 </configuration>
-            </plugin>
-
-            <!-- ✅ Plugin de rapport Surefire HTML -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven.surefire.report.plugin.version}</version>
-                <configuration>
-                    <outputDirectory>${project.build.directory}/surefire-reports</outputDirectory>
-                    <linkXRef>false</linkXRef>
-                    <alwaysGenerateSurefireReport>true</alwaysGenerateSurefireReport>
-                    <showSuccess>true</showSuccess>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
