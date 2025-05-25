@@ -1,4 +1,4 @@
-package com.makeupnow.backend.dto;
+package com.makeupnow.backend.dto.user;
 
 import com.makeupnow.backend.model.mysql.enums.Role;
 import lombok.*;

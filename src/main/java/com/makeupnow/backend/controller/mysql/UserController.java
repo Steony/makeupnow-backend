@@ -1,8 +1,8 @@
 package com.makeupnow.backend.controller.mysql;
 
-import com.makeupnow.backend.dto.LoginRequestDTO;
-import com.makeupnow.backend.dto.RegisterRequestDTO;
-import com.makeupnow.backend.dto.UserUpdateDTO;
+import com.makeupnow.backend.dto.user.LoginRequestDTO;
+import com.makeupnow.backend.dto.user.RegisterRequestDTO;
+import com.makeupnow.backend.dto.user.UserUpdateDTO;
 import com.makeupnow.backend.exception.InvalidRequestException;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.service.mysql.UserService;

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import jakarta.validation.constraints.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Getter
@@ -36,13 +35,13 @@ public class MakeupService {
     private double price;
 
     // Relation avec Provider (Prestataire)
-    @JsonIgnore
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
     private Provider provider;
 
     // Relation avec Category (Catégorie)
-    @JsonIgnore
+   
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
