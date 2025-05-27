@@ -30,8 +30,9 @@ public class Review {
 
     private String providerName; 
 
-    @NotNull(message = "L'identifiant de la réservation est obligatoire.")
-    private String bookingId;
+    @NotNull(message = "L'identifiant de la prestation est obligatoire.")
+private Long makeupServiceId;
+
 
     @NotNull(message = "La note est obligatoire.")
     @Min(value = 1, message = "La note doit être au minimum de 1.")

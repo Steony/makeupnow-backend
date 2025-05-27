@@ -10,4 +10,6 @@ import java.util.List;
 public interface ReviewRepository extends MongoRepository<Review, String> {
     List<Review> findByProviderId(Long providerId);
     List<Review> findByCustomerId(Long customerId);
+    List<Review> findByMakeupServiceId(Long makeupServiceId);
+
 }

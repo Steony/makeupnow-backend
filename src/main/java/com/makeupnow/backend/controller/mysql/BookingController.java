@@ -1,6 +1,7 @@
 package com.makeupnow.backend.controller.mysql;
 
-import com.makeupnow.backend.model.mysql.Booking;
+import com.makeupnow.backend.dto.booking.BookingCreateDTO;
+import com.makeupnow.backend.dto.booking.BookingResponseDTO;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.service.mysql.BookingService;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
@@ -16,65 +17,44 @@ import java.util.List;
 @RequestMapping("/api/bookings")
 public class BookingController {
 
-    @Autowired private BookingService bookingService;
+    @Autowired
+    private BookingService bookingService;
 
-
-    // DTO interne pour la création (tu peux le mettre dans un fichier à part)
-    public static class BookingRequest {
-        public Long customerId;
-        public Long providerId;
-        public Long serviceId;
-        public Long scheduleId;
-        public double totalPrice;
-    }
-
-   
     @PostMapping
-    public ResponseEntity<Booking> createBooking(@RequestBody BookingRequest request) {
-        Booking booking = bookingService.createBooking(
-            request.customerId,
-            request.providerId,
-            request.serviceId,
-            request.scheduleId,
-            request.totalPrice
-        );
-        return ResponseEntity.status(201).body(booking);
+    public ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingCreateDTO request) {
+        BookingResponseDTO response = bookingService.createBooking(request);
+        return ResponseEntity.status(201).body(response);
     }
 
-   
-   @DeleteMapping("/{id}")
-public ResponseEntity<String> deleteBooking(
-    @PathVariable Long id,
-    @RequestParam Long userId,
-    @RequestParam Role userRole) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteBooking(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestParam Role userRole) {
 
-    bookingService.deleteBooking(id, userId, userRole);
-    return ResponseEntity.ok("Réservation supprimée avec succès.");
-}
+        bookingService.deleteBooking(id, userId, userRole);
+        return ResponseEntity.ok("Réservation supprimée avec succès.");
+    }
 
-
-   
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<Booking>> getBookingsByCustomer(@PathVariable Long customerId) {
-        List<Booking> bookings = bookingService.getBookingsByCustomer(customerId);
+    public ResponseEntity<List<BookingResponseDTO>> getBookingsByCustomer(@PathVariable Long customerId) {
+        List<BookingResponseDTO> bookings = bookingService.getBookingsByCustomer(customerId);
         return ResponseEntity.ok(bookings);
     }
 
-    
     @GetMapping("/provider/{providerId}")
-    public ResponseEntity<List<Booking>> getBookingsByProvider(@PathVariable Long providerId) {
-        List<Booking> bookings = bookingService.getBookingsByProvider(providerId);
+    public ResponseEntity<List<BookingResponseDTO>> getBookingsByProvider(@PathVariable Long providerId) {
+        List<BookingResponseDTO> bookings = bookingService.getBookingsByProvider(providerId);
         return ResponseEntity.ok(bookings);
     }
 
-   
     @GetMapping
-    public ResponseEntity<List<Booking>> getAllBookings() {
-        List<Booking> bookings = bookingService.getAllBookings();
+    public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
+        List<BookingResponseDTO> bookings = bookingService.getAllBookings();
         return ResponseEntity.ok(bookings);
     }
 
-    // Gestion globale des exceptions spécifiques
+    // 🔴 Gestion des exceptions personnalisées
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
@@ -83,5 +63,11 @@ public ResponseEntity<String> deleteBooking(
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<String> handleInvalidRequest(InvalidRequestException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    // ✅ Gestion de l'erreur sur créneau déjà réservé (empêche 500)
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.badRequest().body("Une erreur est survenue : " + ex.getMessage());
     }
 }

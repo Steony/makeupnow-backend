@@ -1,18 +1,13 @@
 package com.makeupnow.backend.service.mysql;
 
+import com.makeupnow.backend.dto.booking.BookingCreateDTO;
+import com.makeupnow.backend.dto.booking.BookingResponseDTO;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
-import com.makeupnow.backend.model.mysql.Booking;
-import com.makeupnow.backend.model.mysql.Customer;
-import com.makeupnow.backend.model.mysql.MakeupService;
-import com.makeupnow.backend.model.mysql.Provider;
-import com.makeupnow.backend.model.mysql.Schedule;
+import com.makeupnow.backend.model.mysql.*;
 import com.makeupnow.backend.model.mysql.enums.BookingStatus;
 import com.makeupnow.backend.model.mysql.enums.Role;
-import com.makeupnow.backend.repository.mysql.BookingRepository;
-import com.makeupnow.backend.repository.mysql.CustomerRepository;
-import com.makeupnow.backend.repository.mysql.MakeupServiceRepository;
-import com.makeupnow.backend.repository.mysql.ProviderRepository;
-import com.makeupnow.backend.repository.mysql.ScheduleRepository;
+import com.makeupnow.backend.repository.mysql.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -39,73 +34,107 @@ public class BookingService {
     private ScheduleRepository scheduleRepository;
 
     @Autowired
-    private UserActionLogService userActionLogService; // injection du service log
+    private UserActionLogService userActionLogService;
 
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Transactional
-    public Booking createBooking(Long customerId, Long providerId, Long serviceId, Long scheduleId, double totalPrice) {
-        Customer customer = customerRepository.findById(customerId)
-            .orElseThrow(() -> new ResourceNotFoundException("Customer non trouvé avec l'id : " + customerId));
+@Transactional
+public BookingResponseDTO createBooking(BookingCreateDTO dto) {
+    // Vérifier si le créneau est déjà réservé
+    boolean isAlreadyBooked = bookingRepository.existsByScheduleIdAndStatusNot(
+            dto.getScheduleId(), BookingStatus.CANCELLED);
 
-        Provider provider = providerRepository.findById(providerId)
-            .orElseThrow(() -> new ResourceNotFoundException("Provider non trouvé avec l'id : " + providerId));
+    if (isAlreadyBooked) {
+        throw new IllegalStateException("Ce créneau est déjà réservé.");
+    }
 
-        MakeupService service = makeupServiceRepository.findById(serviceId)
-            .orElseThrow(() -> new ResourceNotFoundException("Service non trouvé avec l'id : " + serviceId));
+    Customer customer = customerRepository.findById(dto.getCustomerId())
+            .orElseThrow(() -> new ResourceNotFoundException("Customer non trouvé avec l'id : " + dto.getCustomerId()));
 
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new ResourceNotFoundException("Schedule non trouvé avec l'id : " + scheduleId));
+    Provider provider = providerRepository.findById(dto.getProviderId())
+            .orElseThrow(() -> new ResourceNotFoundException("Provider non trouvé avec l'id : " + dto.getProviderId()));
 
-        Booking booking = Booking.builder()
+    MakeupService service = makeupServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service non trouvé avec l'id : " + dto.getServiceId()));
+
+    Schedule schedule = scheduleRepository.findById(dto.getScheduleId())
+            .orElseThrow(() -> new ResourceNotFoundException("Schedule non trouvé avec l'id : " + dto.getScheduleId()));
+
+    Booking booking = Booking.builder()
             .customer(customer)
             .provider(provider)
             .service(service)
             .schedule(schedule)
-            .totalPrice(totalPrice)
-            .status(BookingStatus.CONFIRMED)  // statut par défaut
+            .totalPrice(dto.getTotalPrice())
+            .status(BookingStatus.CONFIRMED)
             .build();
 
-        Booking savedBooking = bookingRepository.save(booking);
+    Booking savedBooking = bookingRepository.save(booking);
 
-        // Log création réservation
-        userActionLogService.logActionByUserId(customerId, "Création de réservation",
-            "Réservation créée avec ID : " + savedBooking.getId() + " pour le client ID : " + customerId);
+    userActionLogService.logActionByUserId(dto.getCustomerId(), "Création de réservation",
+            "Réservation créée avec ID : " + savedBooking.getId() + " pour le client ID : " + dto.getCustomerId());
 
-        return savedBooking;
-    }
+    return mapToResponseDTO(savedBooking);
+}
 
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+
+
+
+
+ @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @Transactional
-    public void deleteBooking(Long bookingId, Long userId, Role userRole) {
-        Booking booking = bookingRepository.findById(bookingId)
+public void deleteBooking(Long bookingId, Long userId, Role userRole) {
+    Booking booking = bookingRepository.findById(bookingId)
             .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
 
-        if (userRole == Role.ADMIN) {
-            // Log annulation par admin
-            userActionLogService.logActionByUserId(userId, "Annulation de réservation par admin",
+    booking.setStatus(BookingStatus.CANCELLED); 
+    bookingRepository.save(booking);
+
+    if (userRole == Role.ADMIN) {
+        userActionLogService.logActionByUserId(userId, "Annulation de réservation par admin",
                 "Réservation annulée avec ID : " + bookingId + " par l'admin ID : " + userId);
-        } else {
-            // Log annulation par client
-            Long customerId = booking.getCustomer().getId();
-            userActionLogService.logActionByUserId(customerId, "Annulation de réservation",
+    } else {
+        Long customerId = booking.getCustomer().getId();
+        userActionLogService.logActionByUserId(customerId, "Annulation de réservation",
                 "Réservation annulée avec ID : " + bookingId + " par le client ID : " + customerId);
-        }
     }
+}
+
+
 
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
-    public List<Booking> getBookingsByCustomer(Long customerId) {
-        return bookingRepository.findByCustomerId(customerId);
+    public List<BookingResponseDTO> getBookingsByCustomer(Long customerId) {
+        return bookingRepository.findByCustomerId(customerId)
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
     }
 
     @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
-    public List<Booking> getBookingsByProvider(Long providerId) {
-        return bookingRepository.findByProviderId(providerId);
+    public List<BookingResponseDTO> getBookingsByProvider(Long providerId) {
+        return bookingRepository.findByProviderId(providerId)
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+    public List<BookingResponseDTO> getAllBookings() {
+        return bookingRepository.findAll()
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+    }
+
+    private BookingResponseDTO mapToResponseDTO(Booking booking) {
+        BookingResponseDTO dto = new BookingResponseDTO();
+        dto.setId(booking.getId());
+        dto.setDateBooking(booking.getDateBooking());
+        dto.setTotalPrice(booking.getTotalPrice());
+        dto.setStatus(booking.getStatus());
+        dto.setCustomerId(booking.getCustomer().getId());
+        dto.setProviderId(booking.getProvider().getId());
+        dto.setServiceId(booking.getService().getId());
+        dto.setScheduleId(booking.getSchedule().getId());
+        return dto;
     }
 }

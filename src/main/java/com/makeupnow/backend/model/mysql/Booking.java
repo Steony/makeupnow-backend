@@ -54,9 +54,10 @@ public class Booking {
 
     // Relation avec Schedule (Créneau)
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "schedule_id", nullable = false)
-    private Schedule schedule;
+    @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "schedule_id", nullable = false)
+private Schedule schedule;
+
 
     // Relation avec Payment (Paiement)
     @JsonIgnore
