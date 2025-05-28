@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,13 +23,13 @@ public class MakeupServiceController {
 
     @Autowired
     private MakeupServiceService makeupServiceService;
-
+@PreAuthorize("hasRole('PROVIDER')")
   @PostMapping
 public ResponseEntity<MakeupService> createMakeupService(@RequestBody @Valid MakeupServiceCreateDTO dto) {
     MakeupService created = makeupServiceService.createMakeupServiceFromDTO(dto);
     return ResponseEntity.ok(created);
 }
-
+@PreAuthorize("hasRole('PROVIDER')")
  @PutMapping("/{id}")
 public ResponseEntity<String> updateMakeupService(
         @PathVariable Long id,
@@ -43,7 +44,7 @@ public ResponseEntity<String> updateMakeupService(
 }
 
 
-
+@PreAuthorize("hasRole('PROVIDER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMakeupService(@PathVariable Long id) {
         boolean deleted = makeupServiceService.deleteMakeupService(id);
@@ -53,7 +54,7 @@ public ResponseEntity<String> updateMakeupService(
             return ResponseEntity.status(404).body("Service non trouvé.");
         }
     }
-
+@PreAuthorize("isAuthenticated()")
     @GetMapping("/category/{categoryId}")
 public ResponseEntity<List<MakeupServiceResponseDTO>> getServicesByCategory(@PathVariable Long categoryId) {
     List<MakeupServiceResponseDTO> services = makeupServiceService.getServicesByCategory(categoryId);
@@ -67,13 +68,13 @@ public ResponseEntity<List<MakeupServiceResponseDTO>> getServicesByProvider(@Pat
     return ResponseEntity.ok(response);
 }
 
-
+@PreAuthorize("isAuthenticated()")
    @GetMapping
 public ResponseEntity<List<MakeupServiceResponseDTO>> getAllServices() {
     List<MakeupServiceResponseDTO> services = makeupServiceService.getAllServices();
     return ResponseEntity.ok(services);
 }
-
+@PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
 @GetMapping("/search")
 public ResponseEntity<List<MakeupServiceResponseDTO>> searchServices(
     @RequestParam String keyword,

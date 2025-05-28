@@ -8,6 +8,7 @@ import com.makeupnow.backend.service.mysql.ScheduleService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,19 +21,19 @@ public class ScheduleController {
 
     @Autowired
     private ScheduleService scheduleService;
-
+@PreAuthorize("hasRole('PROVIDER')")
     @PostMapping
     public ResponseEntity<ScheduleResponseDTO> createSchedule(@RequestBody @Valid ScheduleCreateDTO dto) {
         ScheduleResponseDTO response = scheduleService.createSchedule(dto);
         return ResponseEntity.ok(response);
     }
-
+@PreAuthorize("hasRole('PROVIDER')")
     @PutMapping("/{id}")
     public ResponseEntity<ScheduleResponseDTO> updateSchedule(@PathVariable Long id, @RequestBody @Valid ScheduleUpdateDTO dto) {
         ScheduleResponseDTO updated = scheduleService.updateSchedule(id, dto);
         return ResponseEntity.ok(updated);
     }
-
+@PreAuthorize("hasRole('PROVIDER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSchedule(@PathVariable Long id) {
         boolean deleted = scheduleService.deleteSchedule(id);
@@ -42,13 +43,13 @@ public class ScheduleController {
             return ResponseEntity.status(404).body("Créneau introuvable.");
         }
     }
-
+@PreAuthorize("hasRole('PROVIDER')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<ScheduleResponseDTO>> getSchedulesByProvider(@PathVariable Long providerId) {
         List<ScheduleResponseDTO> list = scheduleService.getSchedulesByProvider(providerId);
         return ResponseEntity.ok(list);
     }
-
+@PreAuthorize("hasRole('PROVIDER')")
     @GetMapping("/available")
     public ResponseEntity<List<ScheduleResponseDTO>> getAvailableSchedules(
             @RequestParam Long serviceId,

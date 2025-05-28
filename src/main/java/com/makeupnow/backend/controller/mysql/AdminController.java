@@ -7,6 +7,7 @@ import com.makeupnow.backend.service.mysql.AdminService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,13 +18,14 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
-
+ @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
     }
 
-    @GetMapping("/users/{userId}")
+     @PreAuthorize("hasRole('ADMIN')")
+     @GetMapping("/users/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable Long userId) {
         User user = adminService.getUserById(userId);
         if (user == null) {
@@ -32,14 +34,15 @@ public class AdminController {
         return ResponseEntity.ok(user);
     }
 
-     @PutMapping("/users/{adminId}/deactivate/{userId}")
+ @PreAuthorize("hasRole('ADMIN')")
+      @PutMapping("/users/{adminId}/deactivate/{userId}")
     public ResponseEntity<String> deactivateUser(@PathVariable Long adminId, @PathVariable Long userId) {
         if (adminService.deactivateUser(adminId, userId)) {
             return ResponseEntity.ok("Utilisateur désactivé.");
         }
         return ResponseEntity.notFound().build();
     }
-
+ @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/{adminId}/reactivate/{userId}")
     public ResponseEntity<String> reactivateUser(@PathVariable Long adminId, @PathVariable Long userId) {
         if (adminService.reactivateUser(adminId, userId)) {
@@ -48,19 +51,20 @@ public class AdminController {
         return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/users/{adminId}/delete/{userId}")
+ @PreAuthorize("hasRole('ADMIN')")   
+  @DeleteMapping("/users/{adminId}/delete/{userId}")
     public ResponseEntity<String> deleteUser(@PathVariable Long adminId, @PathVariable Long userId) {
         if (adminService.deleteUser(adminId, userId)) {
             return ResponseEntity.ok("Utilisateur supprimé.");
         }
         return ResponseEntity.notFound().build();
     }
-
+ @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/customers")
     public ResponseEntity<List<Customer>> getCustomersByStatus(@RequestParam boolean status) {
         return ResponseEntity.ok(adminService.getCustomersByStatus(status));
     }
-
+ @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/providers")
     public ResponseEntity<List<Provider>> getProvidersByStatus(@RequestParam boolean status) {
         return ResponseEntity.ok(adminService.getProvidersByStatus(status));

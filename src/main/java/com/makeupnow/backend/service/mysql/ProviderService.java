@@ -1,5 +1,6 @@
 package com.makeupnow.backend.service.mysql;
 
+import com.makeupnow.backend.dto.provider.ProviderResponseDTO;
 import com.makeupnow.backend.model.mongo.Review;
 import com.makeupnow.backend.model.mysql.Provider;
 import com.makeupnow.backend.repository.mongo.ReviewRepository;
@@ -44,9 +45,22 @@ public class ProviderService {
         return providerRepository.findByFirstnameContainingIgnoreCaseAndAddressContainingIgnoreCase(keyword, location);
     }
 
-    // Voir profil d'un provider - accessible par tous utilisateurs authentifiés (exemple)
-    @PreAuthorize("isAuthenticated()")
-    public Provider viewProviderProfile(Long providerId) {
-        return providerRepository.findById(providerId).orElseThrow(() -> new RuntimeException("Provider non trouvé"));
-    }
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER') or (hasRole('PROVIDER') and #providerId == authentication.principal.id)")
+public Provider viewProviderProfile(Long providerId) {
+    return providerRepository.findById(providerId)
+        .orElseThrow(() -> new RuntimeException("Provider non trouvé"));
+}
+
+
+    public ProviderResponseDTO mapToDTO(Provider provider) {
+    return ProviderResponseDTO.builder()
+            .id(provider.getId())
+            .firstname(provider.getFirstname())
+            .lastname(provider.getLastname())
+            .address(provider.getAddress())
+            .isCertified(provider.isCertified())
+            .averageRating(getAverageRating(provider.getId()))
+            .build();
+}
+
 }

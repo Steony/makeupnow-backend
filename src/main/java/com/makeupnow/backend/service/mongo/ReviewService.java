@@ -5,11 +5,15 @@ import com.makeupnow.backend.dto.review.ReviewUpdateDTO;
 import com.makeupnow.backend.dto.review.ReviewResponseDTO;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mongo.Review;
+import com.makeupnow.backend.model.mysql.MakeupService;
 import com.makeupnow.backend.repository.mongo.ReviewRepository;
+import com.makeupnow.backend.repository.mysql.MakeupServiceRepository;
 import com.makeupnow.backend.repository.mysql.UserRepository;
+import com.makeupnow.backend.security.SecurityUtils;
 import com.makeupnow.backend.service.mysql.UserActionLogService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -30,12 +34,15 @@ public class ReviewService {
     @Autowired
     private UserActionLogService userActionLogService;
 
+    @Autowired
+    private MakeupServiceRepository makeupServiceRepository;
+
     @PreAuthorize("hasRole('CLIENT')")
     public ReviewResponseDTO createReview(ReviewCreateDTO dto) {
         Review review = new Review();
         review.setCustomerId(dto.getCustomerId());
         review.setProviderId(dto.getProviderId());
-        review.setMakeupServiceId(dto.getMakeupServiceId()); // ✅ nouveau champ
+        review.setMakeupServiceId(dto.getMakeupServiceId());
         review.setRating(dto.getRating());
         review.setComment(dto.getComment());
         review.setDateComment(LocalDateTime.now());
@@ -51,8 +58,8 @@ public class ReviewService {
                 review.getCustomerId(),
                 "Création d'avis",
                 "Avis créé pour le provider ID " + review.getProviderId() +
-                " et service ID " + review.getMakeupServiceId() +
-                " avec note " + review.getRating()
+                        " et service ID " + review.getMakeupServiceId() +
+                        " avec note " + review.getRating()
         );
 
         return mapToDTO(saved);
@@ -63,6 +70,14 @@ public class ReviewService {
         Optional<Review> opt = reviewRepository.findById(reviewId);
         if (opt.isPresent()) {
             Review review = opt.get();
+
+            // 🔒 Vérification de l’identité du client
+            Long currentUserId = SecurityUtils.getCurrentUserId();
+            String currentRole = SecurityUtils.getCurrentUserRole();
+            if (!"ADMIN".equals(currentRole) && !review.getCustomerId().equals(currentUserId)) {
+                throw new AccessDeniedException("Vous n'avez pas le droit de modifier cet avis.");
+            }
+
             review.setRating(dto.getRating());
             review.setComment(dto.getComment());
             reviewRepository.save(review);
@@ -95,27 +110,35 @@ public class ReviewService {
         return true;
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     public List<ReviewResponseDTO> getReviewsByProvider(Long providerId) {
         return reviewRepository.findByProviderId(providerId)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-    public List<ReviewResponseDTO> getReviewsByCustomer(Long customerId) {
-        return reviewRepository.findByCustomerId(customerId)
-                .stream().map(this::mapToDTO).collect(Collectors.toList());
-    }
-
-
-@PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
-public List<ReviewResponseDTO> getReviewsByMakeupService(Long serviceId) {
-    return reviewRepository.findByMakeupServiceId(serviceId)
-            .stream()
-            .map(this::mapToDTO)
-            .collect(Collectors.toList());
+public List<ReviewResponseDTO> getReviewsByCustomer(Long customerId) {
+    return reviewRepository.findByCustomerId(customerId)
+            .stream().map(this::mapToDTO).collect(Collectors.toList());
 }
 
+
+    @PreAuthorize("isAuthenticated()")
+    public List<ReviewResponseDTO> getReviewsByMakeupService(Long serviceId) {
+        MakeupService service = makeupServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prestation introuvable."));
+
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
+        // 🔒 Si c'est un PROVIDER, il ne peut voir que ses propres prestations
+        if ("PROVIDER".equals(currentRole) && !service.getProvider().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Accès interdit à cette prestation.");
+        }
+
+        return reviewRepository.findByMakeupServiceId(serviceId)
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<ReviewResponseDTO> getAllReviews() {
@@ -130,7 +153,7 @@ public List<ReviewResponseDTO> getReviewsByMakeupService(Long serviceId) {
                 .customerName(review.getCustomerName())
                 .providerId(review.getProviderId())
                 .providerName(review.getProviderName())
-                .makeupServiceId(review.getMakeupServiceId()) // ✅ changé ici aussi
+                .makeupServiceId(review.getMakeupServiceId())
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .dateComment(review.getDateComment())

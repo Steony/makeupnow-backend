@@ -8,6 +8,7 @@ import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.service.mysql.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,6 +62,7 @@ public ResponseEntity<String> logout() {
 
 
     // Mise à jour des infos utilisateur
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/update")
 public ResponseEntity<String> updateUser(@RequestBody UserUpdateDTO dto) {
     boolean updated = userService.updateUser(

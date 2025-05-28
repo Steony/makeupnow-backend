@@ -48,6 +48,7 @@ public class MakeupServiceService {
         return makeupServiceRepository.save(service);
     }
 
+@PreAuthorize("hasRole('PROVIDER')")
   public boolean updateMakeupService(Long id, MakeupServiceUpdateDTO dto) {
     MakeupService existing = makeupServiceRepository.findById(id)
             .orElse(null);
@@ -98,7 +99,7 @@ public List<MakeupServiceResponseDTO> getServicesByCategory(Long categoryId) {
         return services.stream().map(this::mapToDTO).toList();
     }
 
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public List<MakeupServiceResponseDTO> searchServicesByCriteria(String keyword, String category, String providerName, String location) {
         List<MakeupService> services = makeupServiceRepository
                 .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);

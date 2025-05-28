@@ -5,6 +5,7 @@ import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mysql.UserRepository;
 import com.makeupnow.backend.factory.UserFactoryDispatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,7 +71,7 @@ public class UserService {
     public void logout() {
         // Rien ici côté backend pour l'instant
     }
-
+@PreAuthorize("isAuthenticated()")
     @Transactional
     public boolean updateUser(Long id, String firstname, String lastname, String email, String password, String address, String phoneNumber) {
         Optional<User> userOpt = userRepository.findByIdAndIsActiveTrue(id);

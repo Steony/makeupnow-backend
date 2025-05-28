@@ -4,6 +4,7 @@ import com.makeupnow.backend.model.mysql.Category;
 import com.makeupnow.backend.service.mysql.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,12 +15,12 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
-
+@PreAuthorize("isAuthenticated()") 
     @GetMapping
     public ResponseEntity<List<Category>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
-
+@PreAuthorize("isAuthenticated()") 
     @GetMapping("/{title}")
     public ResponseEntity<Category> getCategoryByTitle(@PathVariable String title) {
         return ResponseEntity.ok(categoryService.getCategoryByTitle(title));

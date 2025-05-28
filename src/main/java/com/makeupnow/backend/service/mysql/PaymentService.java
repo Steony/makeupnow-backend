@@ -137,6 +137,7 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
 public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
     Payment payment = paymentRepository.findById(dto.getPaymentId())

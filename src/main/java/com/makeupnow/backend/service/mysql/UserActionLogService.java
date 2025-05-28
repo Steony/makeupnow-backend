@@ -1,5 +1,6 @@
 package com.makeupnow.backend.service.mysql;
 
+import com.makeupnow.backend.dto.useractionlog.UserActionLogResponseDTO;
 import com.makeupnow.backend.model.mysql.User;
 import com.makeupnow.backend.model.mysql.UserActionLog;
 import com.makeupnow.backend.repository.mysql.UserActionLogRepository;
@@ -21,8 +22,24 @@ public class UserActionLogService {
     @Autowired
     private UserRepository userRepository;
 
-    // Création d’un log d’action
-    @PreAuthorize("hasRole('ADMIN')")
+    // 🔹 Méthode de mapping UserActionLog → DTO
+    public UserActionLogResponseDTO toResponseDTO(UserActionLog log) {
+        String username = (log.getUser() != null)
+                ? log.getUser().getFirstname() + " " + log.getUser().getLastname()
+                : "Anonyme";
+
+        return UserActionLogResponseDTO.builder()
+                .id(log.getId())
+                .user(username)
+                .action(log.getAction())
+                .description(log.getDescription())
+                .timestamp(log.getTimestamp())
+                .anonymized(log.isAnonymized())
+                .build();
+    }
+
+    // 🔹 Création d’un log d’action
+    @PreAuthorize("isAuthenticated()")
     public void logActionByUserId(Long userId, String action, String description) {
         User user = userRepository.findById(userId).orElse(null);
 
@@ -37,7 +54,7 @@ public class UserActionLogService {
         userActionLogRepository.save(log);
     }
 
-    // Anonymiser les logs d’un utilisateur
+    // 🔹 Anonymisation des logs d’un utilisateur
     @PreAuthorize("hasRole('ADMIN')")
     public void anonymizeUserLogs(Long userId) {
         List<UserActionLog> logs = userActionLogRepository.findByUserId(userId);
@@ -48,19 +65,19 @@ public class UserActionLogService {
         userActionLogRepository.saveAll(logs);
     }
 
-    // Méthode pour récupérer les logs d'un utilisateur
+    // 🔹 Récupérer tous les logs d’un utilisateur
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getUserActionLogsByUserId(Long userId) {
         return userActionLogRepository.findByUserId(userId);
     }
 
-    // Méthode pour récupérer les logs anonymisés
+    // 🔹 Récupérer tous les logs anonymisés
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getAnonymizedUserActionLogs() {
         return userActionLogRepository.findByAnonymizedTrue();
     }
 
-    // Méthode pour récupérer les logs anonymisés d'un utilisateur donné
+    // 🔹 Récupérer les logs anonymisés d’un utilisateur donné
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getUserAnonymizedLogsByUserId(Long userId) {
         return userActionLogRepository.findByUserIdAndAnonymizedTrue(userId);

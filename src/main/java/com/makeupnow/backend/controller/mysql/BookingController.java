@@ -9,6 +9,7 @@ import com.makeupnow.backend.exception.InvalidRequestException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +20,13 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
-
+ @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping
     public ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingCreateDTO request) {
         BookingResponseDTO response = bookingService.createBooking(request);
         return ResponseEntity.status(201).body(response);
     }
-
+@PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBooking(
             @PathVariable Long id,
@@ -35,19 +36,20 @@ public class BookingController {
         bookingService.deleteBooking(id, userId, userRole);
         return ResponseEntity.ok("Réservation supprimée avec succès.");
     }
-
+ @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByCustomer(@PathVariable Long customerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByCustomer(customerId);
         return ResponseEntity.ok(bookings);
     }
 
+     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByProvider(@PathVariable Long providerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByProvider(providerId);
         return ResponseEntity.ok(bookings);
     }
-
+@PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
         List<BookingResponseDTO> bookings = bookingService.getAllBookings();
