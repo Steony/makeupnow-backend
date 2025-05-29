@@ -2,8 +2,10 @@ package com.makeupnow.backend.controller.mysql;
 
 import com.makeupnow.backend.dto.booking.BookingCreateDTO;
 import com.makeupnow.backend.dto.booking.BookingResponseDTO;
-import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.service.mysql.BookingService;
+
+import jakarta.validation.Valid;
+
 import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.exception.InvalidRequestException;
 
@@ -20,35 +22,38 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
- @PreAuthorize("hasRole('CUSTOMER')")
+    
+ @PreAuthorize("hasRole('CLIENT')")
     @PostMapping
-    public ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingCreateDTO request) {
+    public ResponseEntity<BookingResponseDTO> createBooking(@Valid @RequestBody BookingCreateDTO request)
+ {
         BookingResponseDTO response = bookingService.createBooking(request);
         return ResponseEntity.status(201).body(response);
     }
-@PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteBooking(
-            @PathVariable Long id,
-            @RequestParam Long userId,
-            @RequestParam Role userRole) {
 
-        bookingService.deleteBooking(id, userId, userRole);
-        return ResponseEntity.ok("Réservation supprimée avec succès.");
-    }
- @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+@PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+@DeleteMapping("/{id}")
+public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
+    bookingService.deleteBooking(id);
+    return ResponseEntity.ok("Réservation annulée avec succès.");
+}
+
+
+ @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByCustomer(@PathVariable Long customerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByCustomer(customerId);
         return ResponseEntity.ok(bookings);
     }
 
-     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByProvider(@PathVariable Long providerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByProvider(providerId);
         return ResponseEntity.ok(bookings);
     }
+
+
 @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {

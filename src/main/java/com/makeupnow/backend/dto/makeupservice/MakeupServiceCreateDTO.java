@@ -1,9 +1,7 @@
 package com.makeupnow.backend.dto.makeupservice;
 
 import jakarta.validation.constraints.*;
-
 import lombok.Data;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data

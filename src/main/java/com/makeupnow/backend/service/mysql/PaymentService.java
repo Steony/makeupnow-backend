@@ -9,7 +9,10 @@ import com.makeupnow.backend.model.mysql.enums.PaymentStatus;
 import com.makeupnow.backend.repository.mysql.PaymentRepository;
 import com.makeupnow.backend.repository.mysql.BookingRepository;
 import com.makeupnow.backend.repository.mysql.ProviderRepository;
+import com.makeupnow.backend.security.SecurityUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +35,7 @@ public class PaymentService {
     @Autowired
     private UserActionLogService userActionLogService;
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CLIENT')")
     @Transactional
     public PaymentResponseDTO createPayment(PaymentCreateDTO dto) {
         var booking = bookingRepository.findById(dto.getBookingId())
@@ -59,7 +62,7 @@ public class PaymentService {
         return mapToDTO(saved);
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CLIENT)")
     @Transactional
     public boolean confirmPaymentByCustomer(Long paymentId, Long customerId) {
         Payment payment = paymentRepository.findById(paymentId)
@@ -113,21 +116,37 @@ public class PaymentService {
         return true;
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public List<PaymentResponseDTO> getPaymentsByCustomer(Long customerId) {
-        return paymentRepository.findByBookingCustomerId(customerId)
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+public List<PaymentResponseDTO> getPaymentsByCustomer(Long customerId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    String currentRole = SecurityUtils.getCurrentUserRole();
+
+    if (!"ADMIN".equals(currentRole) && !currentUserId.equals(customerId)) {
+        throw new AccessDeniedException("Accès refusé à ces paiements.");
     }
 
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
-    public List<PaymentResponseDTO> getPaymentsByProvider(Long providerId) {
-        return paymentRepository.findByBookingProviderId(providerId)
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    return paymentRepository.findByBookingCustomerId(customerId)
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+}
+
+
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+public List<PaymentResponseDTO> getPaymentsByProvider(Long providerId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    String currentRole = SecurityUtils.getCurrentUserRole();
+
+    if (!"ADMIN".equals(currentRole) && !currentUserId.equals(providerId)) {
+        throw new AccessDeniedException("Accès refusé à ces paiements.");
     }
+
+    return paymentRepository.findByBookingProviderId(providerId)
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+}
+
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<PaymentResponseDTO> getAllPayments() {
@@ -137,8 +156,8 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @Transactional
+   @PreAuthorize("hasRole('ADMIN')")
+@Transactional
 public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
     Payment payment = paymentRepository.findById(dto.getPaymentId())
             .orElseThrow(() -> new ResourceNotFoundException("Payment non trouvé avec l'id : " + dto.getPaymentId()));
@@ -146,14 +165,17 @@ public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
     payment.setStatus(dto.getStatus());
     paymentRepository.save(payment);
 
+    Long adminId = SecurityUtils.getCurrentUserId(); // 🔐 sécurisé
+
     userActionLogService.logActionByUserId(
-        dto.getAdminId(),
+        adminId,
         "Mise à jour paiement",
         "Statut du paiement ID " + dto.getPaymentId() + " mis à jour à " + dto.getStatus().name()
     );
 
     return true;
 }
+
 
 
     private PaymentResponseDTO mapToDTO(Payment payment) {

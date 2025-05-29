@@ -1,6 +1,8 @@
 package com.makeupnow.backend.model.mysql;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -33,7 +35,8 @@ public class Schedule {
     private Provider provider;
 
     // Relation avec Booking (Réservation)
+   @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY)
     @JsonIgnore
-    @OneToOne(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Booking booking;
+    private List<Booking> bookings; 
+
 }

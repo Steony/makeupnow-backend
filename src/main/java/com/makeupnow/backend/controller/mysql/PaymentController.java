@@ -4,6 +4,9 @@ import com.makeupnow.backend.dto.payment.PaymentCreateDTO;
 import com.makeupnow.backend.dto.payment.PaymentResponseDTO;
 import com.makeupnow.backend.dto.payment.PaymentStatusUpdateDTO;
 import com.makeupnow.backend.service.mysql.PaymentService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,13 +20,13 @@ public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
-@PreAuthorize("hasRole('CUSTOMER')")
+@PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/create")
-    public ResponseEntity<PaymentResponseDTO> createPayment(@RequestBody PaymentCreateDTO dto) {
+    public ResponseEntity<PaymentResponseDTO> createPayment(@Valid @RequestBody PaymentCreateDTO dto) {
         PaymentResponseDTO payment = paymentService.createPayment(dto);
         return ResponseEntity.status(201).body(payment);
     }
-@PreAuthorize("hasRole('CUSTOMER')")
+@PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/confirm/customer")
     public ResponseEntity<Boolean> confirmPaymentByCustomer(
             @RequestParam Long paymentId,
@@ -39,7 +42,7 @@ public class PaymentController {
         boolean success = paymentService.confirmPaymentByProvider(paymentId, providerId);
         return ResponseEntity.ok(success);
     }
- @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+ @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<PaymentResponseDTO>> getPaymentsByCustomer(@PathVariable Long customerId) {
         List<PaymentResponseDTO> payments = paymentService.getPaymentsByCustomer(customerId);
@@ -59,7 +62,7 @@ public class PaymentController {
     }
 @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/update-status")
-    public ResponseEntity<Boolean> updatePaymentStatus(@RequestBody PaymentStatusUpdateDTO dto) {
+    public ResponseEntity<Boolean> updatePaymentStatus(@Valid @RequestBody PaymentStatusUpdateDTO dto) {
         boolean success = paymentService.updatePaymentStatus(dto);
 
         return ResponseEntity.ok(success);

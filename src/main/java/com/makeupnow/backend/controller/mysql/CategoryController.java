@@ -1,6 +1,6 @@
 package com.makeupnow.backend.controller.mysql;
 
-import com.makeupnow.backend.model.mysql.Category;
+import com.makeupnow.backend.dto.category.CategoryResponseDTO;
 import com.makeupnow.backend.service.mysql.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +15,16 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
-@PreAuthorize("isAuthenticated()") 
+
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
+    public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
-@PreAuthorize("isAuthenticated()") 
+
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{title}")
-    public ResponseEntity<Category> getCategoryByTitle(@PathVariable String title) {
+    public ResponseEntity<CategoryResponseDTO> getCategoryByTitle(@PathVariable String title) {
         return ResponseEntity.ok(categoryService.getCategoryByTitle(title));
     }
 }

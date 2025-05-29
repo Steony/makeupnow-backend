@@ -3,10 +3,10 @@ package com.makeupnow.backend.security;
 import com.makeupnow.backend.model.mysql.User;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 @AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -25,10 +25,11 @@ public class CustomUserDetails implements UserDetails {
         return user.getRole().name();
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // à personnaliser si tu ajoutes des rôles
-    }
+   @Override
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+}
+
 
     @Override
     public String getPassword() {

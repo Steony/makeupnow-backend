@@ -39,7 +39,6 @@ public class UserActionLogService {
     }
 
     // 🔹 Création d’un log d’action
-    @PreAuthorize("isAuthenticated()")
     public void logActionByUserId(Long userId, String action, String description) {
         User user = userRepository.findById(userId).orElse(null);
 

@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +38,11 @@ public class ReviewService {
 
     @PreAuthorize("hasRole('CLIENT')")
     public ReviewResponseDTO createReview(ReviewCreateDTO dto) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (!dto.getCustomerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Vous ne pouvez créer un avis que pour votre propre compte.");
+        }
+
         Review review = new Review();
         review.setCustomerId(dto.getCustomerId());
         review.setProviderId(dto.getProviderId());
@@ -57,7 +61,7 @@ public class ReviewService {
         userActionLogService.logActionByUserId(
                 review.getCustomerId(),
                 "Création d'avis",
-                "Avis créé pour le provider ID " + review.getProviderId() +
+                "Avis créé pour le prestataire ID " + review.getProviderId() +
                         " et service ID " + review.getMakeupServiceId() +
                         " avec note " + review.getRating()
         );
@@ -67,38 +71,35 @@ public class ReviewService {
 
     @PreAuthorize("hasRole('CLIENT')")
     public boolean updateReview(String reviewId, ReviewUpdateDTO dto) {
-        Optional<Review> opt = reviewRepository.findById(reviewId);
-        if (opt.isPresent()) {
-            Review review = opt.get();
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Avis non trouvé."));
 
-            // 🔒 Vérification de l’identité du client
-            Long currentUserId = SecurityUtils.getCurrentUserId();
-            String currentRole = SecurityUtils.getCurrentUserRole();
-            if (!"ADMIN".equals(currentRole) && !review.getCustomerId().equals(currentUserId)) {
-                throw new AccessDeniedException("Vous n'avez pas le droit de modifier cet avis.");
-            }
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
 
-            review.setRating(dto.getRating());
-            review.setComment(dto.getComment());
-            reviewRepository.save(review);
-
-            userActionLogService.logActionByUserId(
-                    review.getCustomerId(),
-                    "Modification d'avis",
-                    "Avis modifié par " + review.getCustomerName() +
-                            " pour le prestataire " + review.getProviderName() +
-                            ", nouvelle note : " + dto.getRating()
-            );
-
-            return true;
+        if (!"ADMIN".equals(currentRole) && !review.getCustomerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Vous n'avez pas le droit de modifier cet avis.");
         }
-        return false;
+
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+        reviewRepository.save(review);
+
+        userActionLogService.logActionByUserId(
+                review.getCustomerId(),
+                "Modification d'avis",
+                "Avis modifié par " + review.getCustomerName() +
+                        " pour le prestataire " + review.getProviderName() +
+                        ", nouvelle note : " + dto.getRating()
+        );
+
+        return true;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     public boolean deleteReview(Long adminId, String reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("Review non trouvée."));
+                .orElseThrow(() -> new ResourceNotFoundException("Avis non trouvé."));
         reviewRepository.deleteById(reviewId);
 
         userActionLogService.logActionByUserId(
@@ -117,11 +118,10 @@ public class ReviewService {
     }
 
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-public List<ReviewResponseDTO> getReviewsByCustomer(Long customerId) {
-    return reviewRepository.findByCustomerId(customerId)
-            .stream().map(this::mapToDTO).collect(Collectors.toList());
-}
-
+    public List<ReviewResponseDTO> getReviewsByCustomer(Long customerId) {
+        return reviewRepository.findByCustomerId(customerId)
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
 
     @PreAuthorize("isAuthenticated()")
     public List<ReviewResponseDTO> getReviewsByMakeupService(Long serviceId) {
@@ -131,7 +131,6 @@ public List<ReviewResponseDTO> getReviewsByCustomer(Long customerId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         String currentRole = SecurityUtils.getCurrentUserRole();
 
-        // 🔒 Si c'est un PROVIDER, il ne peut voir que ses propres prestations
         if ("PROVIDER".equals(currentRole) && !service.getProvider().getId().equals(currentUserId)) {
             throw new AccessDeniedException("Accès interdit à cette prestation.");
         }

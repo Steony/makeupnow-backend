@@ -1,5 +1,6 @@
 package com.makeupnow.backend.service.mysql;
 
+import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mysql.Customer;
 import com.makeupnow.backend.model.mysql.Provider;
 import com.makeupnow.backend.model.mysql.User;
@@ -36,52 +37,55 @@ public class AdminService {
 
     @PreAuthorize("hasRole('ADMIN')")
     public User getUserById(Long userId) {
-        return userRepository.findById(userId).orElse(null);
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public boolean deactivateUser(Long adminId, Long userId) {
-        return userRepository.findById(userId).map(user -> {
-            user.setActive(false);
-            userRepository.save(user);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId));
 
-            userActionLogService.logActionByUserId(adminId, "Désactivation Utilisateur",
-                    "L'utilisateur avec ID " + userId + " a été désactivé.");
-            return true;
-        }).orElse(false);
+        user.setActive(false);
+        userRepository.save(user);
+
+        userActionLogService.logActionByUserId(adminId, "Désactivation Utilisateur",
+                "L'utilisateur avec ID " + userId + " a été désactivé.");
+        return true;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public boolean reactivateUser(Long adminId, Long userId) {
-        return userRepository.findById(userId).map(user -> {
-            user.setActive(true);
-            userRepository.save(user);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId));
 
-            userActionLogService.logActionByUserId(adminId, "Réactivation Utilisateur",
-                    "L'utilisateur avec ID " + userId + " a été réactivé.");
-            return true;
-        }).orElse(false);
+        user.setActive(true);
+        userRepository.save(user);
+
+        userActionLogService.logActionByUserId(adminId, "Réactivation Utilisateur",
+                "L'utilisateur avec ID " + userId + " a été réactivé.");
+        return true;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public boolean deleteUser(Long adminId, Long userId) {
-        if (userRepository.existsById(userId)) {
-            // Anonymiser les logs d'action avant suppression
-            userActionLogService.anonymizeUserLogs(userId);
-
-            // Suppression de l'utilisateur
-            userRepository.deleteById(userId);
-
-            // Log de suppression par admin
-            userActionLogService.logActionByUserId(adminId, "Suppression Utilisateur",
-                    "L'utilisateur avec ID " + userId + " a été supprimé.");
-
-            return true;
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId);
         }
-        return false;
+
+        // Anonymiser les logs avant suppression
+        userActionLogService.anonymizeUserLogs(userId);
+
+        // Supprimer l'utilisateur
+        userRepository.deleteById(userId);
+
+        userActionLogService.logActionByUserId(adminId, "Suppression Utilisateur",
+                "L'utilisateur avec ID " + userId + " a été supprimé.");
+
+        return true;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -94,7 +98,7 @@ public class AdminService {
         return providerRepository.findByIsActive(status);
     }
 
-     @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserActionLog> getUserActionLogsByUserId(Long userId) {
         return userActionLogService.getUserActionLogsByUserId(userId);
     }

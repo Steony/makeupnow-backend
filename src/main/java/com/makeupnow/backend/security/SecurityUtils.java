@@ -1,31 +1,46 @@
 package com.makeupnow.backend.security;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public class SecurityUtils {
 
-    private SecurityUtils() {
-        // Classe utilitaire, pas d’instanciation
-    }
+    private SecurityUtils() {}
 
     public static Long getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
-            return ((CustomUserDetails) auth.getPrincipal()).getId();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return null;
         }
 
-        throw new IllegalStateException("Utilisateur non authentifié ou détails invalides.");
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return userDetails.getId();
     }
 
     public static String getCurrentUserRole() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
-            return ((CustomUserDetails) auth.getPrincipal()).getRole();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return null;
         }
 
-        throw new IllegalStateException("Utilisateur non authentifié ou rôle non disponible.");
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return userDetails.getAuthorities()
+                          .stream()
+                          .map(GrantedAuthority::getAuthority)
+                          .findFirst()
+                          .orElse(null);
+    }
+
+    public static boolean isCurrentUserAdmin() {
+        return "ROLE_ADMIN".equals(getCurrentUserRole());
+    }
+
+    public static boolean isCurrentUserCustomer() {
+        return "ROLE_CLIENT".equals(getCurrentUserRole());
+    }
+
+    public static boolean isCurrentUserProvider() {
+        return "ROLE_PROVIDER".equals(getCurrentUserRole());
     }
 }
