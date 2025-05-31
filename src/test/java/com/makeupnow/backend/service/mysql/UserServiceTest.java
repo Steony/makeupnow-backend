@@ -22,7 +22,7 @@ public class UserServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private UserActionLogService userActionLogService;
     @Mock private LoginAttemptService loginAttemptService;
-    @Mock private BCryptPasswordEncoder passwordEncoder; // Mock du passwordEncoder
+    @Mock private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks private UserService userService;
 
@@ -43,15 +43,13 @@ public class UserServiceTest {
 
     @Test
     void testLoginUser_Success() {
-        // Création d'un utilisateur fictif
         Customer user = new Customer();
         user.setId(1L);
         user.setEmail("test@example.com");
-        user.setPassword("$2a$10$hashed"); // Mot de passe déjà haché
+        user.setPassword("$2a$10$hashed");
         user.setActive(true);
         user.setRole(Role.CLIENT);
 
-        // Préparation des mocks
         when(userRepository.findByEmailAndIsActiveTrue("test@example.com")).thenReturn(Optional.of(user));
         when(loginAttemptService.isBlocked("test@example.com")).thenReturn(false);
         when(passwordEncoder.matches("password", "$2a$10$hashed")).thenReturn(true);
@@ -60,5 +58,45 @@ public class UserServiceTest {
 
         assertTrue(result);
         verify(userActionLogService).logActionByUserId(eq(1L), eq("Connexion"), eq("Connexion réussie"));
+    }
+
+    @Test
+    void testLoginUser_Failure_WrongPassword() {
+        Customer user = new Customer();
+        user.setId(1L);
+        user.setEmail("test@example.com");
+        user.setPassword("$2a$10$hashed");
+        user.setActive(true);
+
+        when(userRepository.findByEmailAndIsActiveTrue("test@example.com")).thenReturn(Optional.of(user));
+        when(loginAttemptService.isBlocked("test@example.com")).thenReturn(false);
+        when(passwordEncoder.matches("wrongPassword", "$2a$10$hashed")).thenReturn(false);
+
+        boolean result = userService.loginUser("test@example.com", "wrongPassword");
+
+        assertFalse(result);
+        verify(userActionLogService).logActionByUserId(eq(1L), eq("Connexion"), contains("Échec de connexion"));
+    }
+
+    @Test
+    void testLoginUser_Failure_AccountBlocked() {
+        when(loginAttemptService.isBlocked("test@example.com")).thenReturn(true);
+
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            userService.loginUser("test@example.com", "password");
+        });
+
+        assertTrue(exception.getMessage().contains("Trop de tentatives"));
+    }
+
+    @Test
+    void testLoginUser_Failure_UserNotFound() {
+        when(userRepository.findByEmailAndIsActiveTrue("unknown@example.com")).thenReturn(Optional.empty());
+        when(loginAttemptService.isBlocked("unknown@example.com")).thenReturn(false);
+
+        boolean result = userService.loginUser("unknown@example.com", "password");
+
+        assertFalse(result);
+        verify(loginAttemptService).loginFailed("unknown@example.com");
     }
 }

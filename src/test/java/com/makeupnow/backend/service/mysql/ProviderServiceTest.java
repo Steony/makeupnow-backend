@@ -2,18 +2,20 @@ package com.makeupnow.backend.service.mysql;
 
 import com.makeupnow.backend.model.mongo.Review;
 import com.makeupnow.backend.model.mysql.Provider;
+import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mongo.ReviewRepository;
 import com.makeupnow.backend.repository.mysql.ProviderRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.makeupnow.backend.security.SecurityUtilsTestHelper;
+import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ProviderServiceTest {
 
@@ -61,13 +63,18 @@ public class ProviderServiceTest {
 
     @Test
     void testViewProviderProfile_AsAdminOrCustomer() {
+        // Simuler un admin connecté
+        SecurityUtilsTestHelper.setAuthentication(1L, "admin@email.com", Role.ADMIN);
+
         Provider p = new Provider(); p.setId(1L);
         when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
 
-        // On simule un admin (pas de vérif de profil)
         var profile = providerService.viewProviderProfile(1L);
 
         assertEquals(1L, profile.getId());
+
+        // Nettoyer
+        SecurityUtilsTestHelper.clearAuthentication();
     }
 
     @Test
@@ -79,7 +86,6 @@ public class ProviderServiceTest {
         p.setAddress("Paris");
         p.setCertified(true);
 
-        // On stub la moyenne à 4.5
         when(reviewRepository.findByProviderId(1L)).thenReturn(List.of(new Review() {{ setRating(4); }}, new Review() {{ setRating(5); }}));
 
         var dto = providerService.mapToDTO(p);

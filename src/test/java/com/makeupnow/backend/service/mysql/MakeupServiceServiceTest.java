@@ -2,10 +2,11 @@ package com.makeupnow.backend.service.mysql;
 
 import com.makeupnow.backend.dto.makeupservice.MakeupServiceCreateDTO;
 import com.makeupnow.backend.model.mysql.*;
+import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mysql.*;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.makeupnow.backend.security.SecurityUtilsTestHelper;
+import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,11 +31,18 @@ class MakeupServiceServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        // Simuler un prestataire connecté
+        SecurityUtilsTestHelper.setAuthentication(1L, "provider@email.com", Role.PROVIDER);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityUtilsTestHelper.clearAuthentication();
     }
 
     @Test
     void testCreateMakeupService_Success() {
-        // 🔹 DTO
+        // DTO
         MakeupServiceCreateDTO dto = new MakeupServiceCreateDTO();
         dto.setProviderId(1L);
         dto.setCategoryId(2L);
@@ -43,7 +51,7 @@ class MakeupServiceServiceTest {
         dto.setDuration(30);
         dto.setPrice(50.0);
 
-        // 🔹 Mocks
+        // Mocks
         Provider provider = new Provider(); provider.setId(1L);
         Category category = new Category(); category.setId(2L);
         when(providerRepository.findById(1L)).thenReturn(Optional.of(provider));
@@ -61,10 +69,10 @@ class MakeupServiceServiceTest {
 
         when(makeupServiceRepository.save(any())).thenReturn(savedService);
 
-        // 🔹 Appel
+        // Appel
         MakeupService created = makeupServiceService.createMakeupServiceFromDTO(dto);
 
-        // 🔹 Vérif
+        // Vérif
         assertNotNull(created);
         assertEquals("Service 1", created.getTitle());
         assertEquals(1L, created.getProvider().getId());
