@@ -1,8 +1,10 @@
-package com.makeupnow.backend.security;
+package com.makeupnow.backend.unit.security;
 
 
 import com.makeupnow.backend.model.mysql.Customer;
 import com.makeupnow.backend.model.mysql.enums.Role;
+import com.makeupnow.backend.security.CustomUserDetails;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 

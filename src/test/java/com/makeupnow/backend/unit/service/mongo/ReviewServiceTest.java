@@ -1,12 +1,14 @@
-package com.makeupnow.backend.service.mongo;
+package com.makeupnow.backend.unit.service.mongo;
 
 import com.makeupnow.backend.dto.review.ReviewCreateDTO;
 import com.makeupnow.backend.model.mongo.Review;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mongo.ReviewRepository;
 import com.makeupnow.backend.repository.mysql.UserRepository;
-import com.makeupnow.backend.security.SecurityUtilsTestHelper;
+import com.makeupnow.backend.service.mongo.ReviewService;
 import com.makeupnow.backend.service.mysql.UserActionLogService;
+import com.makeupnow.backend.unit.security.SecurityUtilsTestHelper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

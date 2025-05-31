@@ -1,14 +1,20 @@
-package com.makeupnow.backend.service.mysql;
+package com.makeupnow.backend.unit.service.mysql;
 
 import com.makeupnow.backend.model.mysql.Customer;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.repository.mysql.UserRepository;
 import com.makeupnow.backend.security.LoginAttemptService;
+import com.makeupnow.backend.service.mysql.UserActionLogService;
+import com.makeupnow.backend.service.mysql.UserService;
+import com.makeupnow.backend.unit.security.SecurityUtilsTestHelper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -99,4 +105,55 @@ public class UserServiceTest {
         assertFalse(result);
         verify(loginAttemptService).loginFailed("unknown@example.com");
     }
+
+@Test
+void testUpdateUser_Success() {
+    // Arrange
+    Long userId = 2L;
+    Customer existingUser = new Customer();
+    existingUser.setId(userId);
+    existingUser.setFirstname("AncienPrenom");
+    existingUser.setLastname("AncienNom");
+    existingUser.setEmail("old@example.com");
+    existingUser.setPassword(new BCryptPasswordEncoder().encode("oldpass"));
+    existingUser.setAddress("Ancienne adresse");
+    existingUser.setPhoneNumber("0102030405");
+    existingUser.setActive(true);
+
+    // 👉 Simule l'utilisateur connecté correspondant
+    SecurityUtilsTestHelper.setAuthentication(userId, "old@example.com", Role.CLIENT);
+
+    when(userRepository.findByIdAndIsActiveTrue(userId)).thenReturn(Optional.of(existingUser));
+    when(passwordEncoder.matches("newpass", existingUser.getPassword())).thenReturn(false);
+
+    // Act
+    boolean result = userService.updateUser(userId, "NouveauPrenom", "NouveauNom", "new@example.com",
+            "newpass", "Nouvelle adresse", "0607080910");
+
+    // Assert
+    assertTrue(result, "La méthode doit retourner true.");
+    assertEquals("NouveauPrenom", existingUser.getFirstname());
+    assertEquals("NouveauNom", existingUser.getLastname());
+    assertEquals("new@example.com", existingUser.getEmail());
+    assertEquals("Nouvelle adresse", existingUser.getAddress());
+    assertEquals("0607080910", existingUser.getPhoneNumber());
+    verify(userRepository).save(existingUser);
+    verify(userActionLogService).logActionByUserId(eq(userId), eq("Mise à jour du compte"), contains("Modifications"));
+
+    // 🔴 Nettoyage (optionnel)
+    SecurityUtilsTestHelper.clearAuthentication();
+}
+
+@Test
+void testUpdateUser_UserNotFound() {
+    Long userId = 99L;
+    when(userRepository.findByIdAndIsActiveTrue(userId)).thenReturn(Optional.empty());
+
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        userService.updateUser(userId, "a", "b", "c", "d", "e", "f");
+    });
+
+    assertTrue(exception.getMessage().contains("Utilisateur non trouvé"));
+}
+
 }
