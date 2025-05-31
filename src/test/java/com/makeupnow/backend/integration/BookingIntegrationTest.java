@@ -17,10 +17,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -83,4 +87,41 @@ public class BookingIntegrationTest {
                .andExpect(jsonPath("$.serviceId").value(3))
                .andExpect(jsonPath("$.scheduleId").value(4));
     }
+
+   @DisplayName("DELETE /api/bookings/{id} → 200 OK si la réservation est annulée")
+@Test
+@WithMockUser(username = "client@email.com", roles = "CLIENT")
+void testDeleteBooking_returns200() throws Exception {
+    Long bookingId = 42L;
+
+    // Corrigé : méthode void → doNothing()
+    doNothing().when(bookingService).deleteBooking(bookingId);
+
+    mockMvc.perform(delete("/api/bookings/{id}", bookingId))
+        .andExpect(status().isOk())
+        .andExpect(content().string("Réservation annulée avec succès."));
+}
+
+@DisplayName("GET /api/bookings/customer/{customerId} → 200 OK avec une liste")
+@Test
+@WithMockUser(username = "client@email.com", roles = "CLIENT")
+void testGetBookingsByCustomer_returns200() throws Exception {
+    Long customerId = 1L;
+    BookingResponseDTO fakeResponse = new BookingResponseDTO();
+    fakeResponse.setId(1L);
+    fakeResponse.setTotalPrice(50.0);
+    fakeResponse.setStatus(BookingStatus.CONFIRMED);
+
+    List<BookingResponseDTO> fakeList = List.of(fakeResponse);
+
+    when(bookingService.getBookingsByCustomer(customerId)).thenReturn(fakeList);
+
+    mockMvc.perform(get("/api/bookings/customer/{customerId}", customerId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(1))
+        .andExpect(jsonPath("$[0].totalPrice").value(50.0))
+        .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
+}
+
+
 }
