@@ -35,25 +35,40 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
-    @Transactional
-    public boolean registerUser(Role role, String firstname, String lastname, String email, String password, String address, String phoneNumber) {
-        if (existsByEmail(email)) {
-            throw new IllegalArgumentException("Un utilisateur avec cet email existe déjà.");
-        }
-
-        User user = userFactoryDispatcher.createUser(role, firstname, lastname, email, password);
-
-        user.setAddress(address);
-        user.setPhoneNumber(phoneNumber);
-        user.setActive(true);
-
-        userRepository.save(user);
-
-        // Log après sauvegarde
-        userActionLogService.logActionByUserId(user.getId(), "Création de compte", "Compte créé pour " + email);
-
-        return true;
+      @Transactional
+public boolean registerUser(
+    Role role,
+    String firstname,
+    String lastname,
+    String email,
+    String motDePasse,
+    String address,
+    String phoneNumber
+    // SUPPRIMER Boolean isCertified
+) {
+    if (existsByEmail(email)) {
+        throw new IllegalArgumentException("Un utilisateur avec cet email existe déjà.");
     }
+
+    // Création du user
+    User user = userFactoryDispatcher.createUser(role, firstname, lastname, email, motDePasse);
+    user.setAddress(address);
+    user.setPhoneNumber(phoneNumber);
+    user.setActive(true);
+
+    // Si c’est un Provider, on laisse isCertified à false (par défaut dans l'entité !)
+    // On ne set plus ce champ à partir d’un input.
+
+    // Sauvegarde en base
+    userRepository.save(user);
+
+    // Log métier (plus de mention du status "certifié")
+    String logMsg = "Compte créé pour " + email;
+    userActionLogService.logActionByUserId(user.getId(), "Création de compte", logMsg);
+
+    return true;
+}
+
 
     public boolean loginUser(String email, String password) {
         

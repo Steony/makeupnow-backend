@@ -30,34 +30,40 @@ public class UserController {
     
 
     // ✅ Enregistrement
-    @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterRequestDTO dto) {
-        try {
-            if (userService.existsByEmail(dto.getEmail())) {
-                throw new InvalidRequestException("Un utilisateur avec cet email existe déjà.");
-            }
-
-            boolean created = userService.registerUser(
-                    dto.getRole(),
-                    dto.getFirstname(),
-                    dto.getLastname(),
-                    dto.getEmail(),
-                    dto.getPassword(),
-                    dto.getAddress(),
-                    dto.getPhoneNumber()
-            );
-
-            if (created) {
-                return ResponseEntity.ok("Utilisateur créé avec succès.");
-            } else {
-                throw new ResourceNotFoundException("Erreur lors de la création de l'utilisateur.");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace(); // 📌 Pour debug console
-            throw new InvalidRequestException("Erreur lors de l'inscription : " + e.getMessage());
-        }
+     @PostMapping("/register")
+public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterRequestDTO dto) {
+    // 1) Vérifier si l’email existe déjà
+    if (userService.existsByEmail(dto.getEmail())) {
+        return ResponseEntity
+                .badRequest()
+                .body("Un utilisateur avec cet email existe déjà.");
     }
+
+    // 2) Appeler la méthode de service en passant les bons paramètres (sans isCertified)
+    try {
+        boolean created = userService.registerUser(
+            dto.getRole(),
+            dto.getFirstname(),
+            dto.getLastname(),
+            dto.getEmail(),
+            dto.getPassword(),
+            dto.getAddress(),
+            dto.getPhoneNumber()
+            // <-- PAS d'isCertified ici
+        );
+
+        if (created) {
+            return ResponseEntity.ok("Utilisateur créé avec succès.");
+        } else {
+            throw new ResourceNotFoundException("Erreur lors de la création de l'utilisateur.");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity
+                .status(400)
+                .body("Erreur lors de l'inscription : " + e.getMessage());
+    }
+}
 
     // ✅ Connexion avec génération de token JWT
     @PostMapping("/login")

@@ -88,7 +88,8 @@ public class SecurityConfig {
         // 1) Origines autorisées : URL HTTP du bundler Metro (Expo)
         configuration.setAllowedOrigins(List.of(
             "http://192.168.1.185:8081",  // Expo/Metro sur votre PC
-            "http://localhost:8081"       // (optionnel pour tests depuis navigateur)
+            "http://localhost:8081",        // (optionnel pour tests depuis navigateur)
+            "http://192.168.1.157:8081"  // Expo/Metro sur votre téléphone
         ));
 
         // 2) Méthodes HTTP autorisées (inclure OPTIONS pour le pré-vol CORS)
