@@ -1,6 +1,7 @@
 package com.makeupnow.backend.unit.service.mysql;
 
 import com.makeupnow.backend.dto.booking.BookingCreateDTO;
+import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mysql.*;
 import com.makeupnow.backend.model.mysql.enums.BookingStatus;
 import com.makeupnow.backend.model.mysql.enums.Role;
@@ -17,6 +18,11 @@ import org.mockito.MockitoAnnotations;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class BookingServiceTest {
@@ -51,13 +57,11 @@ public class BookingServiceTest {
 
     @AfterEach
     void tearDown() {
-        // Nettoie le contexte de sécurité
         SecurityUtilsTestHelper.clearAuthentication();
     }
 
     @Test
     void testCreateBooking_Success() {
-        // Préparer les données de test
         BookingCreateDTO dto = new BookingCreateDTO();
         dto.setCustomerId(1L);
         dto.setProviderId(2L);
@@ -87,7 +91,6 @@ public class BookingServiceTest {
                 .status(BookingStatus.CONFIRMED)
                 .build();
 
-        // Définir le comportement des mocks
         when(bookingRepository.existsByScheduleIdAndStatusNot(4L, BookingStatus.CANCELLED)).thenReturn(false);
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(providerRepository.findById(2L)).thenReturn(Optional.of(provider));
@@ -95,10 +98,8 @@ public class BookingServiceTest {
         when(scheduleRepository.findById(4L)).thenReturn(Optional.of(schedule));
         when(bookingRepository.save(any())).thenReturn(bookingSaved);
 
-        // Appeler la méthode à tester
         var response = bookingService.createBooking(dto);
 
-        // Vérifications
         assertNotNull(response);
         assertEquals(10L, response.getId());
         assertEquals(BookingStatus.CONFIRMED, response.getStatus());
@@ -106,5 +107,78 @@ public class BookingServiceTest {
 
         verify(bookingRepository).save(any(Booking.class));
         verify(userActionLogService).logActionByUserId(1L, "Création de réservation", "Réservation créée avec ID : 10");
+    }
+
+    @Test
+    void testCreateBooking_FailsWhenScheduleAlreadyBooked() {
+        BookingCreateDTO dto = new BookingCreateDTO();
+        dto.setScheduleId(4L);
+
+        when(bookingRepository.existsByScheduleIdAndStatusNot(4L, BookingStatus.CANCELLED)).thenReturn(true);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            bookingService.createBooking(dto);
+        });
+
+        assertEquals("Ce créneau est déjà réservé.", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+        verify(userActionLogService, never()).logActionByUserId(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void testCreateBooking_FailsWhenCustomerNotFound() {
+        BookingCreateDTO dto = new BookingCreateDTO();
+        dto.setCustomerId(1L);
+        dto.setScheduleId(4L);
+
+        when(bookingRepository.existsByScheduleIdAndStatusNot(4L, BookingStatus.CANCELLED)).thenReturn(false);
+        when(customerRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            bookingService.createBooking(dto);
+        });
+
+        assertEquals("Customer non trouvé avec l'id : 1", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+        verify(userActionLogService, never()).logActionByUserId(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void testCancelBooking_Success() {
+        Long bookingId = 10L;
+
+        Customer customer = new Customer();
+        customer.setId(1L);
+
+        Booking booking = Booking.builder()
+                .id(bookingId)
+                .status(BookingStatus.CONFIRMED)
+                .customer(customer)
+                .build();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+
+        bookingService.deleteBooking(bookingId);
+
+        assertEquals(BookingStatus.CANCELLED, booking.getStatus());
+        verify(bookingRepository).save(booking);
+        verify(userActionLogService).logActionByUserId(
+            anyLong(),
+            eq("Annulation de réservation"),
+            contains("Réservation ID")
+        );
+    }
+
+    @Test
+    void testCancelBooking_FailsWhenBookingNotFound() {
+        Long bookingId = 10L;
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            bookingService.deleteBooking(bookingId);
+        });
+
+        assertEquals("Booking non trouvé avec l'id : 10", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
     }
 }
