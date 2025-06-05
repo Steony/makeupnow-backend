@@ -135,6 +135,15 @@ public class BookingService {
         dto.setProviderId(booking.getProvider().getId());
         dto.setServiceId(booking.getService().getId());
         dto.setScheduleId(booking.getSchedule().getId());
+
+        // 🟡 Champs enrichis pour le résumé
+        dto.setCustomerName(booking.getCustomer().getFirstname() + " " + booking.getCustomer().getLastname());
+        dto.setProviderName(booking.getProvider().getFirstname() + " " + booking.getProvider().getLastname());
+        dto.setServiceTitle(booking.getService().getTitle());
+        dto.setProviderAddress(booking.getProvider().getAddress());
+        // ✅ Conversion de la durée int → String
+        dto.setServiceDuration(String.valueOf(booking.getService().getDuration()));
+
         return dto;
     }
 }

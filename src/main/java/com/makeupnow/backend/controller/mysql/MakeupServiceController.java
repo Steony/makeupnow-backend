@@ -65,14 +65,14 @@ public class MakeupServiceController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+     @PreAuthorize("isAuthenticated()")
     @GetMapping
     public ResponseEntity<List<MakeupServiceResponseDTO>> getAllServices() {
         List<MakeupServiceResponseDTO> services = makeupServiceService.getAllServices();
         return ResponseEntity.ok(services);
     }
 
-    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+  @PreAuthorize("isAuthenticated()")
     @GetMapping("/search")
     public ResponseEntity<List<MakeupServiceResponseDTO>> searchServices(
             @RequestParam String keyword,

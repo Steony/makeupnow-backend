@@ -177,6 +177,34 @@ public boolean updateUser(Long id, String firstname, String lastname, String ema
     return true;
 }
 
+@PreAuthorize("isAuthenticated()")
+@Transactional
+public boolean updatePassword(String currentPassword, String newPassword) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    Optional<User> userOpt = userRepository.findByIdAndIsActiveTrue(currentUserId);
+    if (userOpt.isEmpty()) {
+        throw new IllegalArgumentException("Utilisateur non trouvé.");
+    }
+    User user = userOpt.get();
+
+    // Vérifier l’ancien mot de passe
+    if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+        throw new SecurityException("Mot de passe actuel incorrect.");
+    }
+
+    // Mettre à jour le mot de passe
+    user.setPassword(passwordEncoder.encode(newPassword));
+    userRepository.save(user);
+
+    userActionLogService.logActionByUserId(
+        currentUserId,
+        "Changement de mot de passe",
+        "Mot de passe modifié avec succès."
+    );
+    return true;
+}
+
+
 public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
 }

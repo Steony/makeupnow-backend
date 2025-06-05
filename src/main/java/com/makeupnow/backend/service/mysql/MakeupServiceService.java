@@ -117,7 +117,7 @@ public List<MakeupServiceResponseDTO> getServicesByProvider(Long providerId) {
 
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public List<MakeupServiceResponseDTO> getAllServices() {
         List<MakeupService> services = makeupServiceRepository.findAll();
         return services.stream().map(this::mapToDTO).toList();
