@@ -18,7 +18,7 @@ public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<CategoryResponseDTO> getAllCategories() {
         return categoryRepository.findAll(Sort.by("title"))
                 .stream()
@@ -26,7 +26,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public CategoryResponseDTO getCategoryByTitle(String title) {
         Category category = categoryRepository.findByTitle(title)
                 .orElseThrow(() -> new ResourceNotFoundException("Category non trouvée avec le titre : " + title));

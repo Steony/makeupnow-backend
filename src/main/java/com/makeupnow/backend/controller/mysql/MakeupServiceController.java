@@ -51,28 +51,29 @@ public class MakeupServiceController {
                 ResponseEntity.status(404).body("Service non trouvé.");
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<MakeupServiceResponseDTO>> getServicesByCategory(@PathVariable Long categoryId) {
         List<MakeupServiceResponseDTO> services = makeupServiceService.getServicesByCategory(categoryId);
         return ResponseEntity.ok(services);
     }
 
-    @PreAuthorize("isAuthenticated()")
+   @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN', 'CUSTOMER')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<MakeupServiceResponseDTO>> getServicesByProvider(@PathVariable Long providerId) {
         List<MakeupServiceResponseDTO> response = makeupServiceService.getServicesByProvider(providerId);
         return ResponseEntity.ok(response);
     }
 
-     @PreAuthorize("isAuthenticated()")
+     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping
     public ResponseEntity<List<MakeupServiceResponseDTO>> getAllServices() {
+        System.out.println(">>> [DEBUG] Controller: getAllMakeupServices appelé !");
         List<MakeupServiceResponseDTO> services = makeupServiceService.getAllServices();
         return ResponseEntity.ok(services);
     }
 
-  @PreAuthorize("isAuthenticated()")
+ @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<List<MakeupServiceResponseDTO>> searchServices(
             @RequestParam String keyword,

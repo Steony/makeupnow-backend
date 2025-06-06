@@ -74,7 +74,7 @@ public ResponseEntity<String> deleteReview(@PathVariable String reviewId,
 
     // ✅ Lister les reviews par prestation (MakeupService) - accès Tous
 @GetMapping("/service/{serviceId}")
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
 public ResponseEntity<List<ReviewResponseDTO>> getReviewsByMakeupService(@PathVariable Long serviceId) {
     return ResponseEntity.ok(reviewService.getReviewsByMakeupService(serviceId));
 }
@@ -82,7 +82,7 @@ public ResponseEntity<List<ReviewResponseDTO>> getReviewsByMakeupService(@PathVa
 
     // ✅ Lister toutes les reviews - accès Admin
     @GetMapping("/all")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public ResponseEntity<List<ReviewResponseDTO>> getAllReviews() {
         return ResponseEntity.ok(reviewService.getAllReviews());
     }

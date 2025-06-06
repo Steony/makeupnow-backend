@@ -38,7 +38,7 @@ public class ProviderController {
     /**
      * 👤 Accès au profil d’un prestataire par l’admin, un client ou le prestataire lui-même.
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/{id}/profile")
     public ResponseEntity<ProviderResponseDTO> getProviderProfile(@PathVariable Long id) {
         Provider provider = providerService.viewProviderProfile(id);
@@ -49,10 +49,25 @@ public class ProviderController {
      * ⭐ Note moyenne d’un prestataire.
      * Visible par le prestataire lui-même, les clients ou l’admin.
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/{id}/rating")
     public ResponseEntity<Double> getAverageRating(@PathVariable Long id) {
         Double rating = providerService.getAverageRating(id);
         return ResponseEntity.ok(rating);
     }
+
+    /**
+ * 🔄 Liste de tous les prestataires (providers)
+ * Accessible par les clients, les prestataires et l’admin.
+ */
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
+@GetMapping
+public ResponseEntity<List<ProviderResponseDTO>> getAllProviders() {
+    List<Provider> providers = providerService.getAllProviders(); // il te faut cette méthode dans le service !
+    List<ProviderResponseDTO> dtos = providers.stream()
+            .map(providerService::mapToDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(dtos);
+}
+
 }

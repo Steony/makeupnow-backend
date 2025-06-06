@@ -29,8 +29,9 @@ public class RegisterRequestDTO {
     )
     private String password;
 
+    @NotBlank(message = "L'adresse est requise")
     private String address;
-
+@NotBlank(message = "Le numéro de téléphone est requis")
     private String phoneNumber;
 
     @NotNull(message = "Le rôle est requis")

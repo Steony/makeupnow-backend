@@ -28,18 +28,28 @@ public class JwtService {
 
     // ✅ Génère un token avec ID + rôle
     public String generateToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("id", user.getId());
-        claims.put("role", "ROLE_" + user.getRole().name());
+    Map<String, Object> claims = new HashMap<>();
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
+    claims.put("id", user.getId());
+    claims.put("role", "ROLE_" + user.getRole().name());
+
+    // Vérifie que le prénom est bien défini sinon fallback sur un autre champ ou valeur par défaut
+  String firstname = user.getFirstname();
+if (firstname == null || firstname.isEmpty()) {
+    firstname = "Utilisateur"; // valeur par défaut
+}
+claims.put("firstname", firstname);
+
+
+    return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(user.getEmail())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
+}
+
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -76,4 +86,6 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    
 }

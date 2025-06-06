@@ -121,7 +121,7 @@ public List<PaymentResponseDTO> getPaymentsByCustomer(Long customerId) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     String currentRole = SecurityUtils.getCurrentUserRole();
 
-    if (!"ADMIN".equals(currentRole) && !currentUserId.equals(customerId)) {
+    if (!"ROLE_ADMIN".equals(currentRole) && !currentUserId.equals(customerId)) {
         throw new AccessDeniedException("Accès refusé à ces paiements.");
     }
 
@@ -137,7 +137,7 @@ public List<PaymentResponseDTO> getPaymentsByProvider(Long providerId) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     String currentRole = SecurityUtils.getCurrentUserRole();
 
-    if (!"ADMIN".equals(currentRole) && !currentUserId.equals(providerId)) {
+    if (!"ROLE_ADMIN".equals(currentRole) && !currentUserId.equals(providerId)) {
         throw new AccessDeniedException("Accès refusé à ces paiements.");
     }
 

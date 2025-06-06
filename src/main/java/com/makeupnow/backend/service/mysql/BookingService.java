@@ -75,24 +75,24 @@ public class BookingService {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         String currentRole = SecurityUtils.getCurrentUserRole();
 
-        if (!"ADMIN".equals(currentRole) && !booking.getCustomer().getId().equals(currentUserId)) {
+        if (!"ROLE_ADMIN".equals(currentRole) && !booking.getCustomer().getId().equals(currentUserId)) {
             throw new AccessDeniedException("Vous ne pouvez pas annuler cette réservation.");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        String action = "ADMIN".equals(currentRole) ? "Annulation de réservation par admin" : "Annulation de réservation";
+        String action = "ROLE_ADMIN".equals(currentRole) ? "Annulation de réservation par admin" : "Annulation de réservation";
         userActionLogService.logActionByUserId(currentUserId, action,
                 "Réservation ID : " + bookingId + " annulée.");
     }
 
-    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<BookingResponseDTO> getBookingsByCustomer(Long customerId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         String currentRole = SecurityUtils.getCurrentUserRole();
 
-        if (!"ADMIN".equals(currentRole) && !currentUserId.equals(customerId)) {
+        if (!"ROLE_ADMIN".equals(currentRole) && !currentUserId.equals(customerId)) {
             throw new AccessDeniedException("Accès interdit à ces réservations.");
         }
 
@@ -102,12 +102,12 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<BookingResponseDTO> getBookingsByProvider(Long providerId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         String currentRole = SecurityUtils.getCurrentUserRole();
 
-        if (!"ADMIN".equals(currentRole) && !currentUserId.equals(providerId)) {
+        if (!"ROLE_ADMIN".equals(currentRole) && !currentUserId.equals(providerId)) {
             throw new AccessDeniedException("Accès interdit à ces réservations.");
         }
 
@@ -117,7 +117,7 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+   @PreAuthorize("hasAnyRole('ADMIN')")
     public List<BookingResponseDTO> getAllBookings() {
         return bookingRepository.findAll()
                 .stream()

@@ -95,42 +95,64 @@ public class MakeupServiceService {
         return true;
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<MakeupServiceResponseDTO> getServicesByCategory(Long categoryId) {
         List<MakeupService> services = makeupServiceRepository.findByCategoryId(categoryId);
-        return services.stream().map(this::mapToDTO).toList();
+        return services.stream()
+            .map(service -> {
+                System.out.println(">>> [DEBUG] Mapping entité -> DTO, service = " + service.getId());
+                return mapToDTO(service);
+            })
+            .toList();
     }
 
-  @PreAuthorize("isAuthenticated()")
-public List<MakeupServiceResponseDTO> getServicesByProvider(Long providerId) {
-    Long currentUserId = SecurityUtils.getCurrentUserId();
-    String currentUserRole = SecurityUtils.getCurrentUserRole();
+    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN', 'CLIENT')")
+    public List<MakeupServiceResponseDTO> getServicesByProvider(Long providerId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        String currentUserRole = SecurityUtils.getCurrentUserRole();
 
-    // 🔒 Si l'utilisateur est Provider, il ne peut voir que ses propres services
-    if ("ROLE_PROVIDER".equals(currentUserRole) && !currentUserId.equals(providerId)) {
-        throw new AccessDeniedException("Vous ne pouvez consulter que vos propres services.");
+        System.out.println("🔍 currentUserId: " + currentUserId + ", providerId (reçu): " + providerId);
+
+        // 🔒 Si l'utilisateur est Provider, il ne peut voir que ses propres services
+        if ("ROLE_PROVIDER".equals(currentUserRole) && !currentUserId.equals(providerId)) {
+            throw new AccessDeniedException("Vous ne pouvez consulter que vos propres services.");
+        }
+
+        List<MakeupService> services = makeupServiceRepository.findByProviderId(providerId);
+        return services.stream()
+            .map(service -> {
+                System.out.println(">>> [DEBUG] Mapping entité -> DTO, service = " + service.getId());
+                return mapToDTO(service);
+            })
+            .toList();
     }
 
-    List<MakeupService> services = makeupServiceRepository.findByProviderId(providerId);
-    return services.stream().map(this::mapToDTO).toList();
-}
-
-
-
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<MakeupServiceResponseDTO> getAllServices() {
+        System.out.println(">>> [DEBUG] Controller: getAllMakeupServices appelé !");
         List<MakeupService> services = makeupServiceRepository.findAll();
-        return services.stream().map(this::mapToDTO).toList();
+        return services.stream()
+            .map(service -> {
+                System.out.println(">>> [DEBUG] Mapping entité -> DTO, service = " + service.getId());
+                return mapToDTO(service);
+            })
+            .toList();
     }
 
-    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<MakeupServiceResponseDTO> searchServicesByCriteria(String keyword, String category, String providerName, String location) {
         List<MakeupService> services = makeupServiceRepository
                 .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
-        return services.stream().map(this::mapToDTO).toList();
+        return services.stream()
+            .map(service -> {
+                System.out.println(">>> [DEBUG] Mapping entité -> DTO, service = " + service.getId());
+                return mapToDTO(service);
+            })
+            .toList();
     }
 
     public MakeupServiceResponseDTO mapToDTO(MakeupService service) {
+        System.out.println(">>> [DEBUG] mapToDTO appelé pour service = " + service.getId());
         MakeupServiceResponseDTO dto = new MakeupServiceResponseDTO();
         dto.setId(service.getId());
         dto.setTitle(service.getTitle());

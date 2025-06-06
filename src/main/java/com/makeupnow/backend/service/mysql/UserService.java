@@ -116,7 +116,7 @@ public boolean registerUser(
     public void logout() {
         // Rien ici côté backend pour l'instant
     }
-@PreAuthorize("isAuthenticated()")
+ @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
 @Transactional
 public boolean updateUser(Long id, String firstname, String lastname, String email, String password, String address, String phoneNumber) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
@@ -177,7 +177,7 @@ public boolean updateUser(Long id, String firstname, String lastname, String ema
     return true;
 }
 
-@PreAuthorize("isAuthenticated()")
+ @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
 @Transactional
 public boolean updatePassword(String currentPassword, String newPassword) {
     Long currentUserId = SecurityUtils.getCurrentUserId();

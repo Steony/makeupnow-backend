@@ -25,36 +25,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomUserDetailsService customUserDetailsService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                @NonNull HttpServletResponse response,
+                                @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getServletPath();
+    System.out.println("🔎 JwtAuthenticationFilter appelé pour: " + request.getServletPath());
 
-        // ⛔ Ne filtre pas les routes publiques
-        if (path.equals("/api/users/login") || path.equals("/api/users/register")) {
-            filterChain.doFilter(request, response);
-            return;
+    String authHeader = request.getHeader("Authorization");
+    System.out.println("🔑 Authorization header: " + authHeader);
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        System.out.println("🚫 Pas de Bearer token trouvé.");
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    String jwt = authHeader.substring(7);
+    String userEmail;
+
+    try {
+        userEmail = jwtService.extractUsername(jwt);
+        System.out.println("✅ userEmail extrait: " + userEmail);
+    } catch (Exception e) {
+        System.out.println("❌ Erreur extraction userEmail: " + e.getMessage());
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        var userDetails = customUserDetailsService.loadUserByUsername(userEmail);
+        System.out.println("👤 UserDetails chargé: " + userDetails.getUsername());
+
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+            System.out.println("🔐 Token JWT valide, Authentication créée.");
+
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            System.out.println("🎯 Authentication injectée dans SecurityContext: " + authToken);
+        } else {
+            System.out.println("⚠️ JWT invalide !");
         }
+    } else {
+        System.out.println("🚫 userEmail null ou déjà authentifié");
+    }
 
-        String authHeader = request.getHeader("Authorization");
+    filterChain.doFilter(request, response);
 
-        // 🔍 Vérifie la présence du header et son format "Bearer token"
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String jwt = authHeader.substring(7);
-        String userEmail;
-
-        try {
-            userEmail = jwtService.extractUsername(jwt);
-        } catch (Exception e) {
-            // 🔐 Token mal formé → on laisse passer sans authentification
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         // 🔄 Vérifie que l'utilisateur n'est pas déjà authentifié
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {

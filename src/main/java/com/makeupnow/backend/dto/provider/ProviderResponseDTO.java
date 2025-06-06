@@ -12,6 +12,5 @@ public class ProviderResponseDTO {
     private String firstname;
     private String lastname;
     private String address;
-    private boolean isCertified;
     private Double averageRating;
 }

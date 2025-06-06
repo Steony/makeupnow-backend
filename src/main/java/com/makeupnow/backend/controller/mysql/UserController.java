@@ -78,7 +78,7 @@ public class UserController {
     }
 
     
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @PutMapping("/update")
     public ResponseEntity<String> updateUser(@Valid @RequestBody UserUpdateDTO dto) {
         boolean updated = userService.updateUser(
@@ -98,7 +98,7 @@ public class UserController {
     }
 
     
-    @PreAuthorize("isAuthenticated()")
+     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(@Valid @RequestBody PasswordUpdateDTO dto) {
         boolean updated = userService.updatePassword(dto.getCurrentPassword(), dto.getNewPassword());
@@ -110,7 +110,7 @@ public class UserController {
     }
 
   
-    @PreAuthorize("isAuthenticated()")
+     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String authorizationHeader) {
         String token = authorizationHeader.substring(7);

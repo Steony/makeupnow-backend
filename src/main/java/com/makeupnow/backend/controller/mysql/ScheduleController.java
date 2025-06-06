@@ -43,13 +43,13 @@ public class ScheduleController {
             return ResponseEntity.status(404).body("Créneau introuvable.");
         }
     }
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<ScheduleResponseDTO>> getSchedulesByProvider(@PathVariable Long providerId) {
         List<ScheduleResponseDTO> list = scheduleService.getSchedulesByProvider(providerId);
         return ResponseEntity.ok(list);
     }
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/available")
     public ResponseEntity<List<ScheduleResponseDTO>> getAvailableSchedules(
             @RequestParam Long serviceId,

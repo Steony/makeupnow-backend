@@ -83,7 +83,7 @@ public class ScheduleService {
         return true;
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<ScheduleResponseDTO> getSchedulesByProvider(Long providerId) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
 
@@ -95,7 +95,7 @@ public class ScheduleService {
                 .stream().map(this::mapToDTO).toList();
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<ScheduleResponseDTO> getAvailableSchedules(Long serviceId, String date) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
 

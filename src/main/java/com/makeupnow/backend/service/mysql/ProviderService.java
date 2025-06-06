@@ -26,7 +26,7 @@ public class ProviderService {
     /**
      * Calcul de la moyenne des notes d’un prestataire.
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public Double getAverageRating(Long providerId) {
         List<Review> reviews = reviewRepository.findByProviderId(providerId);
         if (reviews.isEmpty()) return 0.0;
@@ -49,7 +49,7 @@ public class ProviderService {
     /**
      * Affichage du profil du prestataire par l’admin, le client ou le prestataire concerné.
      */
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
 public Provider viewProviderProfile(Long providerId) {
     String currentRole = SecurityUtils.getCurrentUserRole();
     Long currentUserId = SecurityUtils.getCurrentUserId();
@@ -79,8 +79,17 @@ public Provider viewProviderProfile(Long providerId) {
                 .firstname(provider.getFirstname())
                 .lastname(provider.getLastname())
                 .address(provider.getAddress())
-                .isCertified(provider.isCertified())
                 .averageRating(getAverageRating(provider.getId()))
                 .build();
     }
+
+/**
+ * Retourne la liste de tous les prestataires.
+ */
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
+public List<Provider> getAllProviders() {
+    return providerRepository.findAll();
+}
+
+
 }

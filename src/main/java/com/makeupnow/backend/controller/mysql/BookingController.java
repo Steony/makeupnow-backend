@@ -39,14 +39,14 @@ public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
 }
 
 
- @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+ @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByCustomer(@PathVariable Long customerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByCustomer(customerId);
         return ResponseEntity.ok(bookings);
     }
 
-     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<BookingResponseDTO>> getBookingsByProvider(@PathVariable Long providerId) {
         List<BookingResponseDTO> bookings = bookingService.getBookingsByProvider(providerId);
@@ -54,7 +54,7 @@ public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
     }
 
 
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
         List<BookingResponseDTO> bookings = bookingService.getAllBookings();

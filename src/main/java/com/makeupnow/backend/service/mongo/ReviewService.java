@@ -123,7 +123,7 @@ public class ReviewService {
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    @PreAuthorize("isAuthenticated()")
+   @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<ReviewResponseDTO> getReviewsByMakeupService(Long serviceId) {
         MakeupService service = makeupServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prestation introuvable."));
@@ -139,7 +139,7 @@ public class ReviewService {
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     public List<ReviewResponseDTO> getAllReviews() {
         return reviewRepository.findAll()
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
