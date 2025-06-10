@@ -13,4 +13,5 @@ public class ProviderResponseDTO {
     private String lastname;
     private String address;
     private Double averageRating;
+    private String categoriesString; 
 }

@@ -1,6 +1,7 @@
 package com.makeupnow.backend.controller.mysql;
 
 import com.makeupnow.backend.dto.provider.ProviderResponseDTO;
+import com.makeupnow.backend.dto.provider.ProviderDetailResponseDTO;
 import com.makeupnow.backend.model.mysql.Provider;
 import com.makeupnow.backend.service.mysql.ProviderService;
 
@@ -36,18 +37,22 @@ public class ProviderController {
     }
 
     /**
-     * 👤 Accès au profil d’un prestataire par l’admin, un client ou le prestataire lui-même.
+     * 👤 Accès au profil DÉTAILLÉ d’un prestataire par l’admin, un client ou le prestataire lui-même.
+     * ➜ RENVOIE TOUTES LES INFOS pour la fiche profil (services, créneaux, avis...)
      */
     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
-    @GetMapping("/{id}/profile")
-    public ResponseEntity<ProviderResponseDTO> getProviderProfile(@PathVariable Long id) {
-        Provider provider = providerService.viewProviderProfile(id);
-        return ResponseEntity.ok(providerService.mapToDTO(provider));
-    }
+   @GetMapping("/{id}/profile")
+public ResponseEntity<ProviderDetailResponseDTO> getProviderProfile(@PathVariable Long id) {
+    Provider provider = providerService.viewProviderProfile(id);
+    System.out.println("🟣 Provider dans controller : " + provider);
+    ProviderDetailResponseDTO dto = providerService.mapToDetailDTO(provider);
+    System.out.println("🟢 DTO généré : " + dto);
+    return ResponseEntity.ok(dto);
+}
+
 
     /**
      * ⭐ Note moyenne d’un prestataire.
-     * Visible par le prestataire lui-même, les clients ou l’admin.
      */
     @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @GetMapping("/{id}/rating")
@@ -57,17 +62,17 @@ public class ProviderController {
     }
 
     /**
- * 🔄 Liste de tous les prestataires (providers)
- * Accessible par les clients, les prestataires et l’admin.
- */
-@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
-@GetMapping
-public ResponseEntity<List<ProviderResponseDTO>> getAllProviders() {
-    List<Provider> providers = providerService.getAllProviders(); // il te faut cette méthode dans le service !
-    List<ProviderResponseDTO> dtos = providers.stream()
-            .map(providerService::mapToDTO)
-            .collect(Collectors.toList());
-    return ResponseEntity.ok(dtos);
-}
+     * 🔄 Liste de tous les prestataires (providers) - DTO light.
+     */
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
+    @GetMapping
+    public ResponseEntity<List<ProviderResponseDTO>> getAllProviders() {
+        List<Provider> providers = providerService.getAllProviders();
+        List<ProviderResponseDTO> dtos = providers.stream()
+                .map(providerService::mapToDTO)
+                .collect(Collectors.toList());
 
+        System.out.println("✅ Contrôleur - Providers envoyés (une seule fois normalement) : " + dtos);
+        return ResponseEntity.ok(dtos); 
+    }
 }
