@@ -77,4 +77,11 @@ public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
     public ResponseEntity<String> handleIllegalState(IllegalStateException ex) {
         return ResponseEntity.badRequest().body("Une erreur est survenue : " + ex.getMessage());
     }
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
+@PostMapping("/bookings/{bookingId}/check-completion")
+public ResponseEntity<Void> checkAndCompleteBooking(@PathVariable Long bookingId) {
+    bookingService.updateBookingStatusIfPaymentsCompleted(bookingId);
+    return ResponseEntity.ok().build();
+}
+
 }

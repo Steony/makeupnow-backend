@@ -5,6 +5,7 @@ import com.makeupnow.backend.dto.booking.BookingResponseDTO;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mysql.*;
 import com.makeupnow.backend.model.mysql.enums.BookingStatus;
+import com.makeupnow.backend.model.mysql.enums.PaymentStatus;
 import com.makeupnow.backend.repository.mysql.*;
 import com.makeupnow.backend.security.SecurityUtils;
 
@@ -26,6 +27,7 @@ public class BookingService {
     @Autowired private MakeupServiceRepository makeupServiceRepository;
     @Autowired private ScheduleRepository scheduleRepository;
     @Autowired private UserActionLogService userActionLogService;
+     @Autowired private PaymentRepository paymentRepository;
 
     @PreAuthorize("hasRole('CLIENT')")
     @Transactional
@@ -125,25 +127,53 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    private BookingResponseDTO mapToResponseDTO(Booking booking) {
-        BookingResponseDTO dto = new BookingResponseDTO();
-        dto.setId(booking.getId());
-        dto.setDateBooking(booking.getDateBooking());
-        dto.setTotalPrice(booking.getTotalPrice());
-        dto.setStatus(booking.getStatus());
-        dto.setCustomerId(booking.getCustomer().getId());
-        dto.setProviderId(booking.getProvider().getId());
-        dto.setServiceId(booking.getService().getId());
-        dto.setScheduleId(booking.getSchedule().getId());
 
-        // 🟡 Champs enrichis pour le résumé
-        dto.setCustomerName(booking.getCustomer().getFirstname() + " " + booking.getCustomer().getLastname());
-        dto.setProviderName(booking.getProvider().getFirstname() + " " + booking.getProvider().getLastname());
-        dto.setServiceTitle(booking.getService().getTitle());
-        dto.setProviderAddress(booking.getProvider().getAddress());
-        // ✅ Conversion de la durée int → String
-        dto.setServiceDuration(String.valueOf(booking.getService().getDuration()));
+    @Transactional
+public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
+    Booking booking = bookingRepository.findById(bookingId)
+        .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
 
-        return dto;
+    // Récupérer les paiements liés à cette réservation
+    List<Payment> payments = paymentRepository.findByBookingId(bookingId);
+
+    boolean clientPaid = payments.stream()
+        .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getBooking().getCustomer().getId().equals(booking.getCustomer().getId()));
+
+    boolean providerPaid = payments.stream()
+        .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getProvider().getId().equals(booking.getProvider().getId()));
+
+    if (clientPaid && providerPaid && booking.getStatus() != BookingStatus.COMPLETED) {
+        booking.setStatus(BookingStatus.COMPLETED);
+        bookingRepository.save(booking);
     }
+}
+
+    private BookingResponseDTO mapToResponseDTO(Booking booking) {
+    BookingResponseDTO dto = new BookingResponseDTO();
+    dto.setId(booking.getId());
+    dto.setDateBooking(booking.getDateBooking());
+    dto.setTotalPrice(booking.getTotalPrice());
+    dto.setStatus(booking.getStatus());
+    dto.setCustomerId(booking.getCustomer().getId());
+    dto.setProviderId(booking.getProvider().getId());
+    dto.setServiceId(booking.getService().getId());
+    dto.setScheduleId(booking.getSchedule().getId());
+
+    dto.setCustomerName(booking.getCustomer().getFirstname() + " " + booking.getCustomer().getLastname());
+    dto.setProviderName(booking.getProvider().getFirstname() + " " + booking.getProvider().getLastname());
+    dto.setProviderEmail(booking.getProvider().getEmail());    // <-- ajouté
+    dto.setProviderPhone(booking.getProvider().getPhoneNumber());    // <-- ajouté
+    dto.setServiceTitle(booking.getService().getTitle());
+    dto.setProviderAddress(booking.getProvider().getAddress());
+    dto.setServiceDuration(String.valueOf(booking.getService().getDuration()));
+
+    if (booking.getSchedule() != null) {
+        dto.setDateSchedule(booking.getSchedule().getStartTime().toLocalDate());
+        dto.setTimeSchedule(booking.getSchedule().getStartTime().toLocalTime());
+    }
+
+    return dto;
+}
+
+
 }

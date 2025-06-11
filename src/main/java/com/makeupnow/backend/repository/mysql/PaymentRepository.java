@@ -10,4 +10,6 @@ import java.util.List;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByBookingCustomerId(Long customerId);
     List<Payment> findByBookingProviderId(Long providerId);
+    List<Payment> findByBookingId(Long bookingId);
+
 }

@@ -20,8 +20,10 @@ private Long id;
     private String firstname;
     private String lastname;
     private String address;
+     private String email;        
+    private String phoneNumber;  
     private Double averageRating;
-    private String categoriesString; // exemple: "Beauté, SFX, Mariage"
+    private String categoriesString; 
 
     // Listes détaillées (déjà mappées)
     private List<MakeupServiceResponseDTO> services;

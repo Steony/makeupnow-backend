@@ -122,6 +122,8 @@ public class ProviderService {
                 .firstname(provider.getFirstname())
                 .lastname(provider.getLastname())
                 .address(provider.getAddress())
+                .email(provider.getEmail())                
+                .phoneNumber(provider.getPhoneNumber())    
                 .averageRating(averageRating)
                 .categoriesString(categoriesString)
                 .services(services)
