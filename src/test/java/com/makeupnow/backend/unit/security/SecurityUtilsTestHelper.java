@@ -5,6 +5,13 @@ import com.makeupnow.backend.model.mysql.Customer;
 import com.makeupnow.backend.model.mysql.enums.Role;
 import com.makeupnow.backend.security.CustomUserDetails;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -40,4 +47,27 @@ public class SecurityUtilsTestHelper {
     public static void clearAuthentication() {
         SecurityContextHolder.clearContext();
     }
+
+
+@BeforeEach
+    void setup() {
+        SecurityUtilsTestHelper.setAuthentication(123L, "admin@email.com", Role.ADMIN);
+    }
+
+    @AfterEach
+    void cleanup() {
+        SecurityUtilsTestHelper.clearAuthentication();
+    }
+
+    @Test
+    void testGetCurrentUserId() {
+        assertEquals(123L, com.makeupnow.backend.security.SecurityUtils.getCurrentUserId());
+    }
+
+    @Test
+    void testIsCurrentUserAdmin() {
+        assertTrue(com.makeupnow.backend.security.SecurityUtils.isCurrentUserAdmin());
+        assertFalse(com.makeupnow.backend.security.SecurityUtils.isCurrentUserProvider());
+    }
+
 }

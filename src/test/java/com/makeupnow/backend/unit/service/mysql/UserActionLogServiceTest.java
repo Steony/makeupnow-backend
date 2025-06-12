@@ -12,6 +12,7 @@ import org.mockito.*;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class UserActionLogServiceTest {
@@ -68,4 +69,20 @@ void anonymizeUserLogs_shouldAnonymizeLogs() {
 
     verify(userActionLogRepository).saveAll(logs);
 }
+
+@Test
+void anonymizeUserLogs_shouldHandleNoLogs() {
+    Long userId = 101L;
+    when(userActionLogRepository.findByUserId(userId)).thenReturn(List.of());
+
+    // Act
+    userActionLogService.anonymizeUserLogs(userId);
+
+    // Assert
+    verify(userActionLogRepository).findByUserId(userId);
+    verify(userActionLogRepository).saveAll(eq(List.of()));
+
+}
+
+
 }

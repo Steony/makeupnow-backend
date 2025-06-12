@@ -25,8 +25,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = BookingController.class)
@@ -88,19 +88,20 @@ public class BookingIntegrationTest {
                .andExpect(jsonPath("$.scheduleId").value(4));
     }
 
-   @DisplayName("DELETE /api/bookings/{id} → 200 OK si la réservation est annulée")
 @Test
 @WithMockUser(username = "client@email.com", roles = "CLIENT")
-void testDeleteBooking_returns200() throws Exception {
-    Long bookingId = 42L;
+void testCancelBooking_Success() throws Exception {
+    // Arrange : le service bookingService.cancelBooking doit ne rien faire (void, pas d'erreur)
+    doNothing().when(bookingService).cancelBooking(1L);
 
-    // Corrigé : méthode void → doNothing()
-    doNothing().when(bookingService).cancelBooking(bookingId);
-
-    mockMvc.perform(delete("/api/bookings/{id}", bookingId))
+    mockMvc.perform(put("/api/bookings/1/cancel")) // mets bien /api/bookings si c'est le mapping global !
         .andExpect(status().isOk())
         .andExpect(content().string("Réservation annulée avec succès."));
+
+    verify(bookingService).cancelBooking(1L); // le service a bien été appelé
 }
+
+
 
 @DisplayName("GET /api/bookings/customer/{customerId} → 200 OK avec une liste")
 @Test

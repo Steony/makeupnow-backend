@@ -56,4 +56,21 @@ class LoginAttemptServiceTest {
 
         assertTrue(service.isBlocked(email), "Encore bloqué car le délai n'est pas vraiment passé (15 min).");
     }
+
+@Test
+    void shouldBlockAfterMaxAttempts() {
+        String email = "fail@test.com";
+        for (int i = 0; i < 5; i++) service.loginFailed(email);
+        assertTrue(service.isBlocked(email));
+    }
+
+    @Test
+    void shouldUnblockAfterLoginSuccess() {
+        String email = "user@test.com";
+        for (int i = 0; i < 5; i++) service.loginFailed(email);
+        assertTrue(service.isBlocked(email));
+        service.loginSucceeded(email);
+        assertFalse(service.isBlocked(email));
+    }
+
 }
