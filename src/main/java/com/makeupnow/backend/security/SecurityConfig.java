@@ -54,6 +54,7 @@ public class SecurityConfig {
 
                 // Routes réservées à l'ADMIN
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
 
                 // Routes accessibles uniquement aux PROVIDER et ADMIN (ex: gérer services, créneaux, etc.)
                 .requestMatchers("/api/provider/**").hasAnyAuthority("ROLE_PROVIDER", "ROLE_ADMIN")
