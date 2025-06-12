@@ -17,7 +17,9 @@ public class ReviewResponseDTO {
     private Long providerId;
     private String providerName;
 
-   private Long makeupServiceId;
+    private Long makeupServiceId;
+
+    private Long bookingId; 
 
     private int rating;
     private String comment;

@@ -119,6 +119,14 @@ public class ScheduleService {
                 .stream().map(this::mapToDTO).toList();
     }
 
+    public List<ScheduleResponseDTO> getAvailableSchedulesByProvider(Long providerId) {
+    return scheduleRepository.findAvailableSchedulesByProviderId(providerId)
+        .stream()
+        .map(this::mapToDTO)
+        .toList();
+}
+
+
     private ScheduleResponseDTO mapToDTO(Schedule schedule) {
         ScheduleResponseDTO dto = new ScheduleResponseDTO();
         dto.setId(schedule.getId());

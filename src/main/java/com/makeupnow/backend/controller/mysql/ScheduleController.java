@@ -57,4 +57,13 @@ public class ScheduleController {
         List<ScheduleResponseDTO> list = scheduleService.getAvailableSchedules(serviceId, date);
         return ResponseEntity.ok(list);
     }
+
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
+@GetMapping("/provider/{providerId}/available")
+public ResponseEntity<List<ScheduleResponseDTO>> getAvailableSchedulesByProvider(@PathVariable Long providerId) {
+    List<ScheduleResponseDTO> list = scheduleService.getAvailableSchedulesByProvider(providerId);
+    return ResponseEntity.ok(list);
+}
+
+  
 }

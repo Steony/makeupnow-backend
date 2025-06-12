@@ -26,7 +26,7 @@ public class PaymentController {
         PaymentResponseDTO payment = paymentService.createPayment(dto);
         return ResponseEntity.status(201).body(payment);
     }
-@PreAuthorize("hasRole('CLIENT')")
+/*@PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/confirm/customer")
     public ResponseEntity<Boolean> confirmPaymentByCustomer(
             @RequestParam Long paymentId,
@@ -34,6 +34,8 @@ public class PaymentController {
         boolean success = paymentService.confirmPaymentByCustomer(paymentId, customerId);
         return ResponseEntity.ok(success);
     }
+*/
+
  @PreAuthorize("hasRole('PROVIDER')")
     @PostMapping("/confirm/provider")
     public ResponseEntity<Boolean> confirmPaymentByProvider(
@@ -42,6 +44,8 @@ public class PaymentController {
         boolean success = paymentService.confirmPaymentByProvider(paymentId, providerId);
         return ResponseEntity.ok(success);
     }
+
+    
  @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<PaymentResponseDTO>> getPaymentsByCustomer(@PathVariable Long customerId) {

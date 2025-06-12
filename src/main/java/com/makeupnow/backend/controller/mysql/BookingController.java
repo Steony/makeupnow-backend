@@ -32,11 +32,12 @@ public class BookingController {
     }
 
 @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-@DeleteMapping("/{id}")
-public ResponseEntity<String> deleteBooking(@PathVariable Long id) {
-    bookingService.deleteBooking(id);
+@PutMapping("/{id}/cancel")
+public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
+    bookingService.cancelBooking(id);
     return ResponseEntity.ok("Réservation annulée avec succès.");
 }
+
 
 
  @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")

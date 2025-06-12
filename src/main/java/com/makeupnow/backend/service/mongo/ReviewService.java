@@ -37,37 +37,40 @@ public class ReviewService {
     private MakeupServiceRepository makeupServiceRepository;
 
     @PreAuthorize("hasRole('CLIENT')")
-    public ReviewResponseDTO createReview(ReviewCreateDTO dto) {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        if (!dto.getCustomerId().equals(currentUserId)) {
-            throw new AccessDeniedException("Vous ne pouvez créer un avis que pour votre propre compte.");
-        }
-
-        Review review = new Review();
-        review.setCustomerId(dto.getCustomerId());
-        review.setProviderId(dto.getProviderId());
-        review.setMakeupServiceId(dto.getMakeupServiceId());
-        review.setRating(dto.getRating());
-        review.setComment(dto.getComment());
-        review.setDateComment(LocalDateTime.now());
-
-        userRepository.findById(dto.getCustomerId()).ifPresent(user ->
-                review.setCustomerName(user.getFirstname() + " " + user.getLastname()));
-        userRepository.findById(dto.getProviderId()).ifPresent(user ->
-                review.setProviderName(user.getFirstname() + " " + user.getLastname()));
-
-        Review saved = reviewRepository.save(review);
-
-        userActionLogService.logActionByUserId(
-                review.getCustomerId(),
-                "Création d'avis",
-                "Avis créé pour le prestataire ID " + review.getProviderId() +
-                        " et service ID " + review.getMakeupServiceId() +
-                        " avec note " + review.getRating()
-        );
-
-        return mapToDTO(saved);
+public ReviewResponseDTO createReview(ReviewCreateDTO dto) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (!dto.getCustomerId().equals(currentUserId)) {
+        throw new AccessDeniedException("Vous ne pouvez créer un avis que pour votre propre compte.");
     }
+
+    Review review = new Review();
+    review.setCustomerId(dto.getCustomerId());
+    review.setProviderId(dto.getProviderId());
+    review.setMakeupServiceId(dto.getMakeupServiceId());
+    review.setBookingId(dto.getBookingId()); // <--- AJOUTÉ ICI
+    review.setRating(dto.getRating());
+    review.setComment(dto.getComment());
+    review.setDateComment(LocalDateTime.now());
+
+    userRepository.findById(dto.getCustomerId()).ifPresent(user ->
+            review.setCustomerName(user.getFirstname() + " " + user.getLastname()));
+    userRepository.findById(dto.getProviderId()).ifPresent(user ->
+            review.setProviderName(user.getFirstname() + " " + user.getLastname()));
+
+    Review saved = reviewRepository.save(review);
+
+    userActionLogService.logActionByUserId(
+            review.getCustomerId(),
+            "Création d'avis",
+            "Avis créé pour le prestataire ID " + review.getProviderId() +
+                    " et service ID " + review.getMakeupServiceId() +
+                    " (booking ID " + review.getBookingId() + ")" +
+                    " avec note " + review.getRating()
+    );
+
+    return mapToDTO(saved);
+}
+
 
     @PreAuthorize("hasRole('CLIENT')")
     public boolean updateReview(String reviewId, ReviewUpdateDTO dto) {
@@ -146,16 +149,18 @@ public class ReviewService {
     }
 
     private ReviewResponseDTO mapToDTO(Review review) {
-        return ReviewResponseDTO.builder()
-                .id(review.getId())
-                .customerId(review.getCustomerId())
-                .customerName(review.getCustomerName())
-                .providerId(review.getProviderId())
-                .providerName(review.getProviderName())
-                .makeupServiceId(review.getMakeupServiceId())
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .dateComment(review.getDateComment())
-                .build();
-    }
+    return ReviewResponseDTO.builder()
+            .id(review.getId())
+            .customerId(review.getCustomerId())
+            .customerName(review.getCustomerName())
+            .providerId(review.getProviderId())
+            .providerName(review.getProviderName())
+            .makeupServiceId(review.getMakeupServiceId())
+            .bookingId(review.getBookingId()) // <--- AJOUT
+            .rating(review.getRating())
+            .comment(review.getComment())
+            .dateComment(review.getDateComment())
+            .build();
+}
+
 }

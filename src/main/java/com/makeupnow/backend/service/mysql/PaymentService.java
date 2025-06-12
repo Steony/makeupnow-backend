@@ -4,7 +4,9 @@ import com.makeupnow.backend.dto.payment.PaymentCreateDTO;
 import com.makeupnow.backend.dto.payment.PaymentResponseDTO;
 import com.makeupnow.backend.dto.payment.PaymentStatusUpdateDTO;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
+import com.makeupnow.backend.model.mysql.Booking;
 import com.makeupnow.backend.model.mysql.Payment;
+import com.makeupnow.backend.model.mysql.enums.BookingStatus;
 import com.makeupnow.backend.model.mysql.enums.PaymentStatus;
 import com.makeupnow.backend.repository.mysql.PaymentRepository;
 import com.makeupnow.backend.repository.mysql.BookingRepository;
@@ -53,6 +55,9 @@ public class PaymentService {
 
         Payment saved = paymentRepository.save(payment);
 
+        booking.setPayment(saved);
+        bookingRepository.save(booking);
+
         userActionLogService.logActionByUserId(
                 booking.getCustomer().getId(),
                 "Création paiement",
@@ -62,6 +67,7 @@ public class PaymentService {
         return mapToDTO(saved);
     }
 
+    /* 
     @PreAuthorize("hasRole('CLIENT)")
     @Transactional
     public boolean confirmPaymentByCustomer(Long paymentId, Long customerId) {
@@ -87,34 +93,33 @@ public class PaymentService {
         );
 
         return true;
+    }*/
+
+   @PreAuthorize("hasRole('PROVIDER')")
+@Transactional
+public boolean confirmPaymentByProvider(Long paymentId, Long providerId) {
+    Payment payment = paymentRepository.findById(paymentId)
+        .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé avec l'id : " + paymentId));
+    if (!payment.getProvider().getId().equals(providerId)) {
+        throw new SecurityException("Accès refusé pour ce prestataire");
     }
+    payment.setStatus(PaymentStatus.COMPLETED);
+    paymentRepository.save(payment);
 
-    @PreAuthorize("hasRole('PROVIDER')")
-    @Transactional
-    public boolean confirmPaymentByProvider(Long paymentId, Long providerId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé avec l'id : " + paymentId));
-
-        if (!payment.getProvider().getId().equals(providerId)) {
-            userActionLogService.logActionByUserId(
-                    providerId,
-                    "Échec confirmation paiement",
-                    "Prestataire non autorisé à confirmer le paiement ID " + paymentId
-            );
-            throw new SecurityException("Accès refusé pour ce prestataire");
-        }
-
-        payment.setStatus(PaymentStatus.COMPLETED);
-        paymentRepository.save(payment);
-
-        userActionLogService.logActionByUserId(
-                providerId,
-                "Confirmation paiement",
-                "Paiement confirmé avec ID " + paymentId
-        );
-
-        return true;
+    Booking booking = payment.getBooking();
+    if (booking != null && booking.getStatus() != BookingStatus.COMPLETED) {
+        booking.setStatus(BookingStatus.COMPLETED);
+        bookingRepository.save(booking);
     }
+    userActionLogService.logActionByUserId(
+        providerId,
+        "Paiement reçu par le prestataire",
+        "Paiement " + paymentId + ", réservation " + (booking != null ? booking.getId() : "-")
+    );
+    return true;
+}
+
+
 
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
 public List<PaymentResponseDTO> getPaymentsByCustomer(Long customerId) {

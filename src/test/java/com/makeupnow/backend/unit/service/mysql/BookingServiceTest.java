@@ -158,7 +158,7 @@ public class BookingServiceTest {
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
 
-        bookingService.deleteBooking(bookingId);
+        bookingService.cancelBooking(bookingId);
 
         assertEquals(BookingStatus.CANCELLED, booking.getStatus());
         verify(bookingRepository).save(booking);
@@ -175,7 +175,7 @@ public class BookingServiceTest {
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            bookingService.deleteBooking(bookingId);
+            bookingService.cancelBooking(bookingId);
         });
 
         assertEquals("Booking non trouvé avec l'id : 10", exception.getMessage());

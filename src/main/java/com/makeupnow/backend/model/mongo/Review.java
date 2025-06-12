@@ -33,6 +33,9 @@ public class Review {
     @NotNull(message = "L'identifiant de la prestation est obligatoire.")
 private Long makeupServiceId;
 
+@NotNull(message = "L'identifiant de la réservation est obligatoire.") 
+    private Long bookingId; 
+
 
     @NotNull(message = "La note est obligatoire.")
     @Min(value = 1, message = "La note doit être au minimum de 1.")

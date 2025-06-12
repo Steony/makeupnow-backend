@@ -2,11 +2,14 @@ package com.makeupnow.backend.service.mysql;
 
 import com.makeupnow.backend.dto.booking.BookingCreateDTO;
 import com.makeupnow.backend.dto.booking.BookingResponseDTO;
+import com.makeupnow.backend.dto.review.ReviewResponseDTO;
 import com.makeupnow.backend.exception.ResourceNotFoundException;
 import com.makeupnow.backend.model.mysql.*;
 import com.makeupnow.backend.model.mysql.enums.BookingStatus;
 import com.makeupnow.backend.model.mysql.enums.PaymentStatus;
+import com.makeupnow.backend.model.mongo.Review;
 import com.makeupnow.backend.repository.mysql.*;
+import com.makeupnow.backend.repository.mongo.ReviewRepository;
 import com.makeupnow.backend.security.SecurityUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +30,8 @@ public class BookingService {
     @Autowired private MakeupServiceRepository makeupServiceRepository;
     @Autowired private ScheduleRepository scheduleRepository;
     @Autowired private UserActionLogService userActionLogService;
-     @Autowired private PaymentRepository paymentRepository;
+    @Autowired private PaymentRepository paymentRepository;
+    @Autowired private ReviewRepository reviewRepository; // <--- AJOUT
 
     @PreAuthorize("hasRole('CLIENT')")
     @Transactional
@@ -70,7 +74,7 @@ public class BookingService {
 
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     @Transactional
-    public void deleteBooking(Long bookingId) {
+    public void cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
 
@@ -119,7 +123,7 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-   @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public List<BookingResponseDTO> getAllBookings() {
         return bookingRepository.findAll()
                 .stream()
@@ -129,25 +133,26 @@ public class BookingService {
 
 
     @Transactional
-public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
+    public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
 
-    // Récupérer les paiements liés à cette réservation
-    List<Payment> payments = paymentRepository.findByBookingId(bookingId);
+        // Récupérer les paiements liés à cette réservation
+        List<Payment> payments = paymentRepository.findByBookingId(bookingId);
 
-    boolean clientPaid = payments.stream()
-        .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getBooking().getCustomer().getId().equals(booking.getCustomer().getId()));
+        boolean clientPaid = payments.stream()
+            .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getBooking().getCustomer().getId().equals(booking.getCustomer().getId()));
 
-    boolean providerPaid = payments.stream()
-        .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getProvider().getId().equals(booking.getProvider().getId()));
+        boolean providerPaid = payments.stream()
+            .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getProvider().getId().equals(booking.getProvider().getId()));
 
-    if (clientPaid && providerPaid && booking.getStatus() != BookingStatus.COMPLETED) {
-        booking.setStatus(BookingStatus.COMPLETED);
-        bookingRepository.save(booking);
+        if (clientPaid && providerPaid && booking.getStatus() != BookingStatus.COMPLETED) {
+            booking.setStatus(BookingStatus.COMPLETED);
+            bookingRepository.save(booking);
+        }
     }
-}
 
+  
     private BookingResponseDTO mapToResponseDTO(Booking booking) {
     BookingResponseDTO dto = new BookingResponseDTO();
     dto.setId(booking.getId());
@@ -159,12 +164,18 @@ public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
     dto.setServiceId(booking.getService().getId());
     dto.setScheduleId(booking.getSchedule().getId());
 
+    dto.setCustomerEmail(booking.getCustomer().getEmail());
+    dto.setCustomerPhone(booking.getCustomer().getPhoneNumber());
+    dto.setCustomerAddress(booking.getCustomer().getAddress());
+
+    dto.setProviderEmail(booking.getProvider().getEmail());
+    dto.setProviderPhone(booking.getProvider().getPhoneNumber());
+    dto.setProviderAddress(booking.getProvider().getAddress());
+
     dto.setCustomerName(booking.getCustomer().getFirstname() + " " + booking.getCustomer().getLastname());
     dto.setProviderName(booking.getProvider().getFirstname() + " " + booking.getProvider().getLastname());
-    dto.setProviderEmail(booking.getProvider().getEmail());    // <-- ajouté
-    dto.setProviderPhone(booking.getProvider().getPhoneNumber());    // <-- ajouté
+
     dto.setServiceTitle(booking.getService().getTitle());
-    dto.setProviderAddress(booking.getProvider().getAddress());
     dto.setServiceDuration(String.valueOf(booking.getService().getDuration()));
 
     if (booking.getSchedule() != null) {
@@ -172,8 +183,41 @@ public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
         dto.setTimeSchedule(booking.getSchedule().getStartTime().toLocalTime());
     }
 
+    // ==== AJOUT DE LA REVIEW ====
+    if (booking.getService() != null && booking.getCustomer() != null) {
+        Review review = reviewRepository.findByMakeupServiceIdAndCustomerIdAndBookingId(
+            booking.getService().getId(),
+            booking.getCustomer().getId(),
+            booking.getId()
+        ).orElse(null);
+
+        if (review != null) {
+            dto.setReview(mapToReviewDTO(review));
+        }
+    }
+
+    // ==== AJOUT DU PAYMENTID ====
+    if (booking.getPayment() != null) {
+        dto.setPaymentId(booking.getPayment().getId());
+    }
+
     return dto;
 }
 
 
+    /*** AJOUT: Méthode utilitaire pour mapper Review => ReviewResponseDTO ***/
+    private ReviewResponseDTO mapToReviewDTO(Review review) {
+        return ReviewResponseDTO.builder()
+            .id(review.getId())
+            .customerId(review.getCustomerId())
+            .customerName(review.getCustomerName())
+            .providerId(review.getProviderId())
+            .providerName(review.getProviderName())
+            
+            .makeupServiceId(review.getMakeupServiceId())
+            .rating(review.getRating())
+            .comment(review.getComment())
+            .dateComment(review.getDateComment())
+            .build();
+    }
 }

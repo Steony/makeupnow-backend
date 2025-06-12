@@ -95,7 +95,7 @@ void testDeleteBooking_returns200() throws Exception {
     Long bookingId = 42L;
 
     // Corrigé : méthode void → doNothing()
-    doNothing().when(bookingService).deleteBooking(bookingId);
+    doNothing().when(bookingService).cancelBooking(bookingId);
 
     mockMvc.perform(delete("/api/bookings/{id}", bookingId))
         .andExpect(status().isOk())

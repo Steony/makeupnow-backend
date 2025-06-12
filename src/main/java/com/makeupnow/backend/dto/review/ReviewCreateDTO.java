@@ -1,7 +1,6 @@
 package com.makeupnow.backend.dto.review;
 
 import jakarta.validation.constraints.*;
-
 import lombok.Data;
 
 @Data
@@ -13,9 +12,11 @@ public class ReviewCreateDTO {
     @NotNull(message = "L'identifiant du prestataire est obligatoire.")
     private Long providerId;
 
-     @NotNull(message = "L'identifiant de la prestation est obligatoire.")
-private Long makeupServiceId;
+    @NotNull(message = "L'identifiant de la prestation est obligatoire.")
+    private Long makeupServiceId;
 
+    @NotNull(message = "L'identifiant de la réservation est obligatoire.") 
+    private Long bookingId;
 
     @Min(value = 1, message = "La note minimale est 1.")
     @Max(value = 5, message = "La note maximale est 5.")
