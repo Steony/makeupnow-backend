@@ -42,6 +42,8 @@ public class BookingResponseDTO {
     private ReviewResponseDTO review;
 
     private Long paymentId;
+    private String paymentStatus;
+
 
 }
 

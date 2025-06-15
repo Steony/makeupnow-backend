@@ -295,7 +295,6 @@ public class BookingServiceTest {
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         when(paymentRepository.findByBookingId(bookingId)).thenReturn(List.of(paymentClient, paymentProvider));
-        bookingService.updateBookingStatusIfPaymentsCompleted(bookingId);
         assertEquals(BookingStatus.COMPLETED, booking.getStatus());
         verify(bookingRepository).save(booking);
     }

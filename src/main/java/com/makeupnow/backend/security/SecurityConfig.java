@@ -52,9 +52,16 @@ public class SecurityConfig {
                     "/v3/api-docs/**"
                 ).permitAll()
 
-                // Routes réservées à l'ADMIN
+               // Routes réservées à l'ADMIN
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/users/logout").hasAnyAuthority("ROLE_CLIENT", "ROLE_PROVIDER", "ROLE_ADMIN")
+
+                // ✅ Autorisation spécifique pour /me
+                .requestMatchers("/api/users/me").hasAnyAuthority("ROLE_CLIENT", "ROLE_PROVIDER", "ROLE_ADMIN")
+
+                // 🔒 Tout le reste sous /api/users/ est réservé à l'admin
                 .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
+
 
                 // Routes accessibles uniquement aux PROVIDER et ADMIN (ex: gérer services, créneaux, etc.)
                 .requestMatchers("/api/provider/**").hasAnyAuthority("ROLE_PROVIDER", "ROLE_ADMIN")

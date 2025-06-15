@@ -34,43 +34,53 @@ public class BookingService {
     @Autowired private ReviewRepository reviewRepository; // <--- AJOUT
 
     @PreAuthorize("hasRole('CLIENT')")
-    @Transactional
-    public BookingResponseDTO createBooking(BookingCreateDTO dto) {
-        boolean isAlreadyBooked = bookingRepository.existsByScheduleIdAndStatusNot(
-                dto.getScheduleId(), BookingStatus.CANCELLED);
+@Transactional
+public BookingResponseDTO createBooking(BookingCreateDTO dto) {
+    boolean isAlreadyBooked = bookingRepository.existsByScheduleIdAndStatusNot(
+            dto.getScheduleId(), BookingStatus.CANCELLED);
 
-        if (isAlreadyBooked) {
-            throw new IllegalStateException("Ce créneau est déjà réservé.");
-        }
-
-        Customer customer = customerRepository.findById(dto.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer non trouvé avec l'id : " + dto.getCustomerId()));
-
-        Provider provider = providerRepository.findById(dto.getProviderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Provider non trouvé avec l'id : " + dto.getProviderId()));
-
-        MakeupService service = makeupServiceRepository.findById(dto.getServiceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Service non trouvé avec l'id : " + dto.getServiceId()));
-
-        Schedule schedule = scheduleRepository.findById(dto.getScheduleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Schedule non trouvé avec l'id : " + dto.getScheduleId()));
-
-        Booking booking = Booking.builder()
-                .customer(customer)
-                .provider(provider)
-                .service(service)
-                .schedule(schedule)
-                .totalPrice(dto.getTotalPrice())
-                .status(BookingStatus.CONFIRMED)
-                .build();
-
-        Booking saved = bookingRepository.save(booking);
-
-        userActionLogService.logActionByUserId(dto.getCustomerId(), "Création de réservation",
-                "Réservation créée avec ID : " + saved.getId());
-
-        return mapToResponseDTO(saved);
+    if (isAlreadyBooked) {
+        throw new IllegalStateException("Ce créneau est déjà réservé.");
     }
+
+    Customer customer = customerRepository.findById(dto.getCustomerId())
+            .orElseThrow(() -> new ResourceNotFoundException("Customer non trouvé avec l'id : " + dto.getCustomerId()));
+
+    Provider provider = providerRepository.findById(dto.getProviderId())
+            .orElseThrow(() -> new ResourceNotFoundException("Provider non trouvé avec l'id : " + dto.getProviderId()));
+
+    MakeupService service = makeupServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service non trouvé avec l'id : " + dto.getServiceId()));
+
+    Schedule schedule = scheduleRepository.findById(dto.getScheduleId())
+            .orElseThrow(() -> new ResourceNotFoundException("Schedule non trouvé avec l'id : " + dto.getScheduleId()));
+
+    Booking booking = Booking.builder()
+            .customer(customer)
+            .provider(provider)
+            .service(service)
+            .schedule(schedule)
+            .totalPrice(dto.getTotalPrice())
+            .status(BookingStatus.CONFIRMED)
+            .build();
+
+    Booking saved = bookingRepository.save(booking);
+
+    // 🔥 Création automatique du paiement
+    Payment payment = new Payment();
+    payment.setBooking(saved);
+    payment.setAmount(saved.getTotalPrice());
+    payment.setStatus(PaymentStatus.PENDING);
+    payment.setProvider(provider);
+
+    paymentRepository.save(payment);
+
+    userActionLogService.logActionByUserId(dto.getCustomerId(), "Création de réservation",
+            "Réservation créée avec ID : " + saved.getId());
+
+    return mapToResponseDTO(saved);
+}
+
 
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     @Transactional
@@ -132,26 +142,6 @@ public class BookingService {
     }
 
 
-    @Transactional
-    public void updateBookingStatusIfPaymentsCompleted(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new ResourceNotFoundException("Booking non trouvé avec l'id : " + bookingId));
-
-        // Récupérer les paiements liés à cette réservation
-        List<Payment> payments = paymentRepository.findByBookingId(bookingId);
-
-        boolean clientPaid = payments.stream()
-            .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getBooking().getCustomer().getId().equals(booking.getCustomer().getId()));
-
-        boolean providerPaid = payments.stream()
-            .anyMatch(p -> p.getStatus() == PaymentStatus.COMPLETED && p.getProvider().getId().equals(booking.getProvider().getId()));
-
-        if (clientPaid && providerPaid && booking.getStatus() != BookingStatus.COMPLETED) {
-            booking.setStatus(BookingStatus.COMPLETED);
-            bookingRepository.save(booking);
-        }
-    }
-
   
     private BookingResponseDTO mapToResponseDTO(Booking booking) {
     BookingResponseDTO dto = new BookingResponseDTO();
@@ -200,6 +190,11 @@ public class BookingService {
     if (booking.getPayment() != null) {
         dto.setPaymentId(booking.getPayment().getId());
     }
+// ==== AJOUT DU PAYMENT STATUS ====
+if (booking.getPayment() != null && booking.getPayment().getStatus() != null) {
+    dto.setPaymentStatus(booking.getPayment().getStatus().name());
+}
+
 
     return dto;
 }

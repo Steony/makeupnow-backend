@@ -161,7 +161,7 @@ public List<PaymentResponseDTO> getPaymentsByProvider(Long providerId) {
                 .collect(Collectors.toList());
     }
 
-   @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole('ADMIN')")
 @Transactional
 public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
     Payment payment = paymentRepository.findById(dto.getPaymentId())
@@ -170,7 +170,20 @@ public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
     payment.setStatus(dto.getStatus());
     paymentRepository.save(payment);
 
-    Long adminId = SecurityUtils.getCurrentUserId(); // 🔐 sécurisé
+    // 🔥 Synchronise le statut Booking ici !
+    Booking booking = payment.getBooking();
+    if (booking != null) {
+        if (dto.getStatus() == PaymentStatus.COMPLETED) {
+            booking.setStatus(BookingStatus.COMPLETED);
+        } else if (dto.getStatus() == PaymentStatus.FAILED) {
+            booking.setStatus(BookingStatus.CANCELLED);
+        } else if (dto.getStatus() == PaymentStatus.PENDING) {
+            booking.setStatus(BookingStatus.CONFIRMED);
+        }
+        bookingRepository.save(booking);
+    }
+
+    Long adminId = SecurityUtils.getCurrentUserId();
 
     userActionLogService.logActionByUserId(
         adminId,
@@ -180,6 +193,7 @@ public boolean updatePaymentStatus(PaymentStatusUpdateDTO dto) {
 
     return true;
 }
+
 
 
 

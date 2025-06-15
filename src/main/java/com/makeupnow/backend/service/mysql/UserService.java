@@ -114,8 +114,22 @@ public boolean registerUser(
 }
 
     public void logout() {
-        // Rien ici côté backend pour l'instant
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId != null) {
+        System.out.println("🧾 Logging logout pour userId=" + currentUserId);
+        userActionLogService.logActionByUserId(
+            currentUserId,
+            "Déconnexion",
+            "Utilisateur déconnecté avec succès."
+        );
+    } else {
+        System.out.println("⚠️ Aucun utilisateur connecté pour la déconnexion.");
     }
+}
+
+
+
+
  @PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
 @Transactional
 public boolean updateUser(Long id, String firstname, String lastname, String email, String password, String address, String phoneNumber) {

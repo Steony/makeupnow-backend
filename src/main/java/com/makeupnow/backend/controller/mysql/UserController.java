@@ -70,9 +70,11 @@ public class UserController {
             throw new InvalidRequestException("Erreur lors de la connexion : " + e.getMessage());
         }
     }
-
+    
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER','ADMIN')")
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
+        System.out.println(" Déconnexion appelée depuis le frontend !");
         userService.logout();
         return ResponseEntity.ok("Déconnexion réussie.");
     }

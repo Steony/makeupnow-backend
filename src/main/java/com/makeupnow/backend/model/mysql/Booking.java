@@ -33,6 +33,7 @@ public class Booking {
     @NotNull
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+    
 
     // Relation avec Customer (Client)
     @JsonIgnore
